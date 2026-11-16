@@ -27,6 +27,10 @@ h2{font-size:22px;color:var(--lantern)}
 #scene{position:absolute;inset:0;width:100%;height:100%}
 .hud{position:absolute;inset:0;display:flex;flex-direction:column;gap:6px;padding-block:8px 10px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hud{pointer-events:none}
+.tophud,.deckui{pointer-events:auto}
+.tag{position:absolute;z-index:2;transform:translate(-50%,-100%);background:var(--glass);border:2px solid var(--panel-hi);color:var(--paper);font-size:11px;font-weight:800;padding:2px 6px;white-space:nowrap}
+.tag.on{border-color:var(--lantern);color:var(--lantern)}
 .tophud{display:flex;flex-direction:column;gap:6px}
 .top{display:flex;align-items:center;gap:8px}
 .top h1{font-size:22px;color:var(--lantern);text-shadow:2px 2px 0 var(--deep);margin-right:auto}
@@ -123,6 +127,8 @@ h2{font-size:22px;color:var(--lantern)}
 
 <div class="game">
   <canvas id="scene" width="200" height="112" aria-label="밤의 대장간. 모루 위에 검이 놓여 있고 대장장이가 망치를 들고 있다."></canvas>
+  <button id="tagMer" class="tag" data-open="shShop">상인</button>
+  <button id="tagLet" class="tag" data-open="shLetter">딸의 편지</button>
   <div class="hud">
     <div class="tophud">
       <header class="top">
@@ -165,7 +171,6 @@ h2{font-size:22px;color:var(--lantern)}
       <div class="rack"><span class="tix" id="celCap"></span><ul class="cellar" id="cellar"></ul></div>
       <div class="row nav">
         <button class="ghost" data-open="shOdds">룬 조합표</button>
-        <button class="ghost" id="bShop" data-open="shShop">상인</button>
         <button class="ghost" data-open="shLog">도감·일지</button>
       </div>
     </div>
@@ -214,6 +219,13 @@ h2{font-size:22px;color:var(--lantern)}
     <div class="row"><button id="bIntro" class="ghost">인트로 다시 보기</button><button id="reset" class="ghost">처음부터 다시</button></div>
   </section>
   <button class="btn end" data-close><span>닫기</span></button></div></div>
+<div class="ov" id="shLetter" hidden><div class="ovbox">
+  <section class="panel">
+    <h2>딸의 편지</h2>
+    <ul class="log" id="letters"></ul>
+    <p class="note">상납금을 낸 날 가운데 사흘마다 편지가 책상에 놓입니다.</p>
+  </section>
+  <button class="btn end" data-close><span>닫기</span></button></div></div>
 <div class="ov" id="ov" hidden></div>
 
 <script>
@@ -255,7 +267,7 @@ function look(l,e){const k=formOf(l),E=ELS[e];if(!k)return{f:0,n:E.n+' 기운의
  const t=(k-1)/19,b=t<.5?mix(E.d,E.m,t*2):mix(E.m,E.h,(t-.5)*2);return{f:k,n:NAMES[e][k-1],b,h:mix(b,'#ffffff',.5),g:E.g,glow:k>=4?E.glow:null};}
 const FORGE_COST=[800,3000,12000,45000];
 const DEF=()=>({credits:300,level:0,forge:1,best:0,sold:0,spins:0,broken:0,log:[{m:'1일째 아침. 병사들이 녹슨 검 3자루를 던져놓고 갔습니다. 밤마다 징수관이 상납금을 걷으러 옵니다.',k:'keep'}],last:['flame','hammer','stone'],
- day:1,stock:2,hasSword:true,el:Math.random()*4|0,dex:[0,0,0,0],kid:3,cellar:[],earn:0,orc:0,repel:0,intro:false,ended:null});
+ day:1,stock:2,hasSword:true,el:Math.random()*4|0,dex:[0,0,0,0],letters:[],unread:false,kid:3,cellar:[],earn:0,orc:0,repel:0,intro:false,ended:null});
 const supply=()=>Math.max(2,3+Math.floor((S.forge-1)/2));
 const cap=()=>2+S.forge;
 const reqOf=d=>Math.min(10,2+Math.floor(d/3));
@@ -266,7 +278,7 @@ const defense=()=>S.cellar.reduce((a,b)=>a+formOf(b.l)+1,0);
 const orcOf=d=>d<2?0:Math.round(d*.8+Math.random()*d*.3);
 function takeNext(){if(S.stock>0){S.stock--;S.hasSword=true;}else S.hasSword=false;S.level=0;S.el=Math.random()*4|0;}
 let S=DEF();
-try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S=Object.assign(DEF(),o);if(!Array.isArray(S.cellar))S.cellar=[];if(!Array.isArray(S.dex))S.dex=[0,0,0,0];}}catch(e){}
+try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S=Object.assign(DEF(),o);if(!Array.isArray(S.cellar))S.cellar=[];if(!Array.isArray(S.dex))S.dex=[0,0,0,0];if(!Array.isArray(S.letters))S.letters=[];}}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
 
 const cost=L=>L===0?0:Math.round(6*Math.pow(1.25,L/2)*(1-.05*(S.forge-1)));
@@ -314,61 +326,94 @@ const STARS=[];for(let i=0;i<34;i++)STARS.push([(i*53+17)%W,(i*29+5)%24+1]);
 const BULB=['#ffc94a','#ff6b3d','#3fc1b0','#ffe9a8'];
 let f=0,busy=false,forging=false,parts=[],flash=0,flashCol='#fff';
 function burst(col,n,up){for(let i=0;i<n;i++)parts.push({x:100+Math.random()*10-5,y:73,vx:(Math.random()-.5)*5,vy:-Math.random()*(up?5:3)-1,l:8+Math.random()*8|0,c:col[i%col.length]});}
-let OY=0;
-function fit(){const cv=$('#scene'),g=cv.parentElement,w=g.clientWidth||400,h=g.clientHeight||700,u=w/200;
- cv.height=Math.max(112,Math.min(560,Math.round(h/u)));
- OY=Math.max(0,Math.min(cv.height-112,Math.ceil(($('.tophud').getBoundingClientRect().height+10)/u)-3));}
+let VT={s:1,tx:0,ty:0};
+function fit(){const cv=$('#scene'),g=cv.parentElement,gr=g.getBoundingClientRect(),w=g.clientWidth||400,h=g.clientHeight||700,dpr=Math.min(3,window.devicePixelRatio||1);
+ cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+ const top=$('.tophud').getBoundingClientRect().bottom-gr.top+2,bot=$('.deckui').getBoundingClientRect().top-gr.top-4;
+ const u=w/200,want=Math.max(1,Math.min(1.75,(bot-top)/(104*u))),sc2=Math.max(1,Math.floor(u*dpr*want));
+ VT={s:sc2,tx:Math.round((cv.width-200*sc2)/2),ty:Math.round(top*dpr)};
+ const place=(id,x,y)=>{const e=$(id);e.style.left=((VT.tx+x*sc2)/dpr)+'px';e.style.top=((VT.ty+y*sc2)/dpr)+'px';};
+ place('#tagMer',60,80);place('#tagLet',136,32);}
+const poly=(c,q)=>{sc.fillStyle=c;sc.beginPath();sc.moveTo(q[0],q[1]);for(let i=2;i<q.length;i+=2)sc.lineTo(q[i],q[i+1]);sc.closePath();sc.fill();};
 function drawScene(){
- const main=sc.canvas&&sc.canvas.id==='scene',oy=main?OY:0,HH=(main?sc.canvas.height:H)-oy;sc.save();sc.translate(0,oy);
- R(0,-oy,W,oy+40,'#0a1430');R(0,40,W,22,'#10224a');R(0,62,W,26,'#17305e');
- STARS.forEach((s,i)=>{if((f+i*7)%23>2)R(s[0],s[1],1,1,i%3?'#cfe0ff':'#fff3c4');});
- disc(170,15,7,'#ffe7a3');disc(167,13,6,'#0a1430');
- for(let x=0;x<W;x++){const h=8+Math.round(5*Math.sin(x/17)+3*Math.sin(x/7+2));R(x,80-h,1,h+8,'#0b1936');}
- // deck
- R(0,88,W,HH-88,'#2b1a22');for(let y=93;y<HH;y+=6)R(0,y,W,1,'#1c1017');for(let x=11;x<W;x+=27)R(x,88,1,HH-88,'#1c1017');
-
- // back wall
- R(22,34,156,54,'#3b2430');for(let y=41;y<88;y+=8)R(22,y,156,1,'#2c1a25');for(let y=34;y<88;y+=16)for(let x=30;x<178;x+=20)R(x,y,1,7,'#2c1a25');
- A(.13,()=>R(22,34,100,54,'#ff8c3c'));A(.12,()=>R(22,46,62,42,'#ff8c3c'));
- // wall trophies: one per forge upgrade
- R(146,69,26,2,'#5a3628');S.cellar.forEach((o,i)=>{if(i<7){const t2=look(o.l,o.e);R(148+i*3,57,2,12,t2.b);R(148+i*3,57,1,12,t2.h);}});
- for(let i=0;i<S.forge-1;i++){const x=76+i*9;R(x,40,1,10,'#cfd6e6');R(x-1,50,3,1,'#b98b3a');R(x,51,1,3,'#5a3628');}
- // roof and awning
- R(14,25,172,7,'#6b3f2e');R(14,25,172,2,'#8a5639');
- for(let x=16,i=0;x<184;x+=12,i++){const c=i%2?'#f1dfb8':'#2f8f86';R(x,32,12,5,c);R(x+2,37,8,1,c);R(x+4,38,4,1,c);}
- R(22,39,5,49,'#5a3628');R(173,39,5,49,'#5a3628');R(22,39,1,49,'#8a5639');
+ const main=sc.canvas&&sc.canvas.id==='scene',v=main?VT:{s:1,tx:0,ty:0},cw=main?sc.canvas.width:W,ch=main?sc.canvas.height:H;
+ sc.save();sc.setTransform(1,0,0,1,0,0);sc.fillStyle='#0a1430';sc.fillRect(0,0,cw,ch);
+ sc.setTransform(v.s,0,0,v.s,v.tx,v.ty);
+ const x0=-v.tx/v.s,xw=cw/v.s,yb=(ch-v.ty)/v.s;
+ // sky, stars, moon, far hills
+ R(x0,40,xw,22,'#10224a');R(x0,62,xw,30,'#17305e');
+ STARS.forEach((st,i)=>{if((f+i*7)%23>2)R(st[0],st[1],1,1,i%3?'#cfe0ff':'#fff3c4');});
+ disc(150,8,5,'#ffe7a3');disc(148,7,4,'#0a1430');
+ for(let x=0;x<W;x++){const h=8+Math.round(5*Math.sin(x/17)+3*Math.sin(x/7+2));R(x,80-h,1,h+12,'#0b1936');}
+ // ground: the deck runs on under the controls
+ R(x0,92,xw,yb-92,'#2b1a22');for(let y=97;y<yb;y+=6)R(x0,y,xw,1,'#1c1017');
+ // room: side walls recede, back wall, floor in perspective
+ poly('#2a1823',[30,20,44,30,44,76,30,92]);poly('#2a1823',[170,20,156,30,156,76,170,92]);
+ R(44,30,112,46,'#3b2430');for(let y=37;y<76;y+=8)R(44,y,112,1,'#2c1a25');for(let y=30;y<76;y+=16)for(let x=52;x<156;x+=20)R(x,y,1,7,'#2c1a25');
+ R(44,30,1,46,'#4a2e3a');R(155,30,1,46,'#22131c');
+ A(.14,()=>R(44,30,72,46,'#ff8c3c'));
+ poly('#3d2733',[44,76,156,76,178,108,22,108]);
+ sc.strokeStyle='#2a1921';sc.lineWidth=.6;for(let i=1;i<8;i++){const t=i/8;sc.beginPath();sc.moveTo(44+112*t,76);sc.lineTo(22+156*t,108);sc.stroke();}
+ [83,92,101].forEach(y=>{const t=(y-76)/32;R(44-22*t,y,112+44*t,.6,'#2a1921');});
+ A(.13,()=>poly('#ff8c3c',[46,76,98,76,92,102,28,102]));
+ R(22,108,156,2,'#22141b');
+ // defense rack on the back wall
+ R(78,50,38,2,'#5a3628');R(78,52,38,1,'#2c1a25');
+ S.cellar.forEach((o,i)=>{if(i<7){const t2=look(o.l,o.e),x=81+i*5;if(t2.glow)A(.25,()=>R(x-1,35,4,16,t2.glow));R(x,36,2,13,t2.b);R(x,36,1,13,t2.h);R(x-1,49,4,1,t2.g);}});
+ // furnace: front, top and side faces, chimney, fire
+ R(54,24,12,20,'#4b4652');poly('#37333d',[66,24,69,22,69,40,66,44]);R(54,24,12,1,'#75707c');
+ poly('#8a8592',[48,46,72,46,76,42,52,42]);R(48,46,24,30,'#57525f');poly('#3b3743',[72,46,76,42,76,72,72,76]);
+ for(let y=53;y<76;y+=7)R(48,y,24,1,'#44404b');
+ R(52,58,16,18,'#1a0b0b');
+ for(let i=0;i<5;i++){const h=5+((f*7+i*13)%7);R(53+i*3,76-h,3,h,['#ff6b3d','#ff8c3c','#ffb347'][(f+i)%3]);const h2=Math.max(1,h-4);R(54+i*3,76-h2,1,h2,'#fff3c4');}
+ A(.16+.04*(f%3),()=>R(44,50,38,34,'#ff7a2f'));
+ // the letter shelf on the back wall: an envelope leaning on the wall and a candle
+ poly('#9a6a45',[122,45,150,45,153,42,125,42]);R(122,45,28,2,'#6b4532');poly('#3f2a22',[150,45,153,42,153,44,150,47]);R(126,47,2,4,'#4a2f24');R(144,47,2,4,'#4a2f24');
+ if(S.unread)A(.28+.1*(f%4<2),()=>R(127,32,15,13,'#ffe9a8'));
+ R(129,35,11,8,S.unread?'#fffbe8':'#cfc3a6');poly(S.unread?'#e9dfc0':'#b3a88c',[129,35,140,35,134.5,40]);R(134,39,2,2,'#c23b2b');
+ R(145,37,2,6,'#f1dfb8');R(145,35+(f%2),2,2,'#ffb347');A(.16+.05*(f%3),()=>R(139,30,14,13,'#ffb347'));
+ // roof: top face, fascia, awning, front posts
+ poly('#9a6240',[26,14,174,14,170,20,30,20]);R(30,20,140,3,'#6b3f2e');R(26,14,148,1,'#b97a4f');
+ for(let x=30,i=0;x<170;x+=10,i++){const c=i%2?'#f1dfb8':'#2f8f86';R(x,23,10,4,c);R(x+2,27,6,1,c);R(x+3,28,4,1,c);}
+ R(30,23,3,69,'#5a3628');R(30,23,1,69,'#8a5639');R(167,23,3,69,'#5a3628');R(167,23,1,69,'#8a5639');
  // string lights
- for(let x=0;x<W;x++)R(x,5+Math.round(6*Math.sin(x/W*Math.PI)),1,1,'#22335c');
- for(let x=6,i=0;x<W;x+=13,i++){const y=6+Math.round(6*Math.sin(x/W*Math.PI)),c=BULB[i%4],on=((f>>2)+i)%6!==0;
+ for(let x=0;x<W;x++)R(x,3+Math.round(5*Math.sin(x/W*Math.PI)),1,1,'#22335c');
+ for(let x=6,i=0;x<W;x+=13,i++){const y=4+Math.round(5*Math.sin(x/W*Math.PI)),c=BULB[i%4],on=((f>>2)+i)%6!==0;
   A(on?.28:.1,()=>R(x-2,y-1,6,7,c));R(x,y,2,3,on?c:'#6a5a44');}
- // furnace
- R(40,36,12,18,'#4b4652');R(40,36,12,2,'#75707c');
- R(30,52,34,36,'#57525f');R(30,52,34,2,'#7e7986');for(let y=60;y<88;y+=7)R(30,y,34,1,'#44404b');
- R(37,66,20,18,'#1a0b0b');
- for(let i=0;i<6;i++){const h=5+((f*7+i*13)%7);R(38+i*3,84-h,3,h,['#ff6b3d','#ff8c3c','#ffb347'][(f+i)%3]);const h2=Math.max(1,h-4);R(39+i*3,84-h2,1,h2,'#fff3c4');}
- A(.16+.04*(f%3),()=>R(26,58,46,32,'#ff7a2f'));
- // hanging lantern + barrel
- R(170,39,1,5,'#22335c');A(.25,()=>R(166,42,9,10,'#ffb347'));R(168,44,5,6,'#ffc94a');R(168,44,5,1,'#5a3628');R(168,49,5,1,'#5a3628');
- R(152,72,14,16,'#5a3628');R(152,75,14,1,'#9aa3b8');R(152,84,14,1,'#9aa3b8');R(153,72,12,2,'#3f7fb0');R(152,72,1,16,'#8a5639');
- // anvil
- R(86,76,30,5,'#4a5166');R(80,77,6,2,'#4a5166');R(86,76,30,1,'#8b95b3');R(92,81,18,3,'#363c4f');R(89,84,24,4,'#4a5166');R(89,84,24,1,'#5c6480');
- // sword on the anvil
- const T=look(S.level,S.el),len=18+T.f;
- if(SO.sword&&S.hasSword){if(T.glow)A(.18+.08*(f%4<2),()=>R(84,70,len+4,8,T.glow));
- R(76,73,2,2,T.g);R(78,73,5,2,'#5a3628');R(83,71,2,6,T.g);R(85,73,len,2,T.b);R(85,73,len,1,T.h);R(85+len,73,1,1,T.h);}
+ // the merchant's spot: a rug and a signpost; every third day the merchant and cart stand here
+ const mer=S.day%3===0;
+ poly('#4a3340',[42,96,76,96,80,106,38,106]);poly('#5c4150',[45,98,73,98,76,104,42,104]);
+ R(45,85,2,13,'#5a3628');R(41,84,10,6,'#8a5639');R(41,84,10,1,'#b97a4f');R(44,86,4,2,mer?'#ffd23d':'#5a3628');
+ if(mer){A(.2+.05*(f%3),()=>R(52,78,28,16,'#ffb347'));
+  R(61,90,15,8,'#6b3f2e');R(61,90,15,1,'#9a6240');poly('#4a2f24',[76,90,78,88,78,96,76,98]);poly('#9a6240',[61,90,76,90,78,88,63,88]);R(63,98,3,3,'#241619');R(71,98,3,3,'#241619');
+  R(63,85,4,4,'#3fc1b0');R(68,84,4,5,'#ffb347');R(73,86,3,3,'#c46be0');
+  R(51,89,9,13,'#4b3a6b');R(51,89,2,13,'#6a549a');R(52,82,7,8,'#3a2d55');R(53,85,5,3,'#e2a878');R(51,102,4,2,'#241619');R(56,102,4,2,'#241619');}
+ // barrel
+ A(.3,()=>R(147,99,15,2,'#000000'));R(148,86,12,14,'#5a3628');R(148,89,12,1,'#9aa3b8');R(148,96,12,1,'#9aa3b8');R(149,85,10,2,'#3f7fb0');R(148,86,1,14,'#8a5639');R(159,86,1,14,'#3f2a22');
+ // anvil on a stump: top face, front, side, horn
+ A(.3,()=>R(86,95,34,3,'#000000'));
+ R(94,87,14,9,'#5a3628');R(94,87,14,1,'#8a5639');R(107,87,1,9,'#3f2a22');
+ poly('#9aa5c4',[88,80,114,80,118,76,92,76]);R(88,80,26,5,'#4a5166');poly('#333949',[114,80,118,76,118,81,114,85]);poly('#6b7490',[88,80,92,76,83,77,80,80]);R(80,80,8,2,'#4a5166');R(95,85,12,2,'#363c4f');
+ // the sword on the anvil, lying at an angle with a lit and a shaded facet
+ if(SO.sword&&S.hasSword){const T=look(S.level,S.el),len=15+T.f*.7,P=(a,c)=>[90+.94*a+.3*c,79-.3*a+.94*c];
+  if(T.glow)A(.2+.08*(f%4<2),()=>poly(T.glow,[...P(3,-3.5),...P(len+7,-3.5),...P(len+7,3.5),...P(3,3.5)]));
+  poly('#5a3628',[...P(-6,-.8),...P(0,-.8),...P(0,.8),...P(-6,.8)]);poly(T.g,[...P(-8,-1.2),...P(-6,-1.2),...P(-6,1.2),...P(-8,1.2)]);
+  poly(T.g,[...P(0,-3),...P(2,-3),...P(2,3),...P(0,3)]);
+  poly(T.h,[...P(2,-1.7),...P(len,-1.7),...P(len+4,0),...P(2,0)]);poly(T.b,[...P(2,0),...P(len+4,0),...P(len,1.7),...P(2,1.7)]);}
  // smith
- const sk='#e2a878';if(SO.smith){
+ const sk='#e2a878';if(SO.smith){A(.3,()=>R(124,96,24,3,'#000000'));sc.translate(-2,9);
  R(131,84,5,4,'#241619');R(139,84,5,4,'#241619');R(132,78,4,6,'#33405c');R(139,78,4,6,'#33405c');
- R(129,62,17,17,'#b5523b');R(131,66,13,14,'#7a5a3c');R(131,66,13,1,'#9a7650');R(133,62,2,4,'#7a5a3c');R(140,62,2,4,'#7a5a3c');
+ R(129,62,17,17,'#b5523b');R(131,66,13,14,'#7a5a3c');R(131,66,13,1,'#9a7650');R(133,62,2,4,'#7a5a3c');R(140,62,2,4,'#7a5a3c');R(144,62,2,17,'#8f3f2d');
  R(131,50,13,12,sk);R(130,47,15,4,'#2f8f86');R(130,47,15,1,'#3fc1b0');R(145,49,3,2,'#2f8f86');
  R(133,54,2,2,'#1b1320');R(138,54,2,2,'#1b1320');R(131,58,12,5,'#d9772e');R(133,63,8,2,'#d9772e');
  const pose=forging?(f%4<2?'up':'down'):'rest';
  if(pose==='up'){R(125,58,6,4,sk);R(123,50,4,9,sk);R(124,39,2,12,'#8a5639');R(120,37,10,5,'#c9d2e6');R(120,41,10,1,'#6b7183');}
  else if(pose==='down'){R(122,64,9,4,sk);R(113,65,10,2,'#8a5639');R(108,63,6,8,'#c9d2e6');R(108,70,6,1,'#6b7183');}
- else{R(126,66,4,9,sk);R(127,74,2,9,'#8a5639');R(124,82,8,4,'#c9d2e6');R(124,85,8,1,'#6b7183');}}
+ else{R(126,66,4,9,sk);R(127,74,2,9,'#8a5639');R(124,82,8,4,'#c9d2e6');R(124,85,8,1,'#6b7183');}
+ sc.translate(2,-9);}
  // particles + flash
- parts=parts.filter(p=>p.l-->0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.6;R(Math.round(p.x),Math.round(p.y),1,1,p.c);});
- if(flash>0){A(flash*.12,()=>R(0,-oy,W,HH+oy,flashCol));flash--;}
+ parts=parts.filter(q=>q.l-->0);parts.forEach(q=>{q.x+=q.vx;q.y+=q.vy;q.vy+=.6;R(Math.round(q.x),Math.round(q.y)+4,1,1,q.c);});
+ if(flash>0){sc.setTransform(1,0,0,1,0,0);A(flash*.12,()=>{sc.fillStyle=flashCol;sc.fillRect(0,0,cw,ch);});flash--;}
  sc.restore();
 }
 
@@ -378,8 +423,10 @@ function drawSword(){
  sw.clearRect(0,0,40,88);if(!S.hasSword)return;const r=(x,y,w,h,c)=>{sw.fillStyle=c;sw.fillRect(x,y,w,h);};
  const T=look(S.level,S.el),k=T.f,e=S.el,len=24+Math.floor(k*1.6),top=62-len,w=k>=15?10:k>=8?8:6,x0=20-w/2,gl=T.glow||T.h;
  if(T.glow){sw.globalAlpha=.1+.008*k+.06*(f%4<2);r(x0-4,top-5,w+8,len+7,T.glow);sw.globalAlpha=.08;r(x0-8,top-2,w+16,len+2,T.glow);sw.globalAlpha=1;}
- r(x0,top,w,len,T.b);r(x0,top,2,len,T.h);r(x0+w-1,top,1,len,'rgba(0,0,0,.25)');
- for(let i=1;i*2<w;i++)r(x0+i,top-i,w-i*2,1,i%2?T.b:T.h);
+ const hw=w/2,lit=mix(T.b,'#ffffff',.4),drk=mix(T.b,'#000000',.38);
+ sw.globalAlpha=.4;r(x0+3,top+3,w,len+1,'#000000');sw.globalAlpha=1;
+ r(x0,top,hw,len,lit);r(x0+hw,top,hw,len,drk);r(x0+hw-1,top,1,len,T.h);r(x0,top,1,len,mix(T.b,'#ffffff',.78));r(x0+w-1,top,1,len,mix(T.b,'#000000',.6));
+ for(let i=1;i*2<w;i++){const ww=w-i*2;r(x0+i,top-i,ww/2,1,lit);r(x0+i+ww/2,top-i,ww/2,1,drk);}
  if(k>=3)r(19,top+3,2,len-5,k>=12?'#ffffff':gl);
  if(!k){r(x0+1,top+6,2,2,'#6a4a35');r(x0+3,top+15,2,3,'#6a4a35');r(x0,top+22,2,2,'#6a4a35');}
  // element motifs grow with the form
@@ -396,11 +443,11 @@ function drawSword(){
  if(k>=18){r(19,top-7,2,3,T.h);r(17,top-5,1,2,gl);r(22,top-5,1,2,gl);}
  if(k>=20)for(let i=0;i<4;i++){const a=f*.25+i*1.57;r(Math.round(20+15*Math.cos(a)),Math.round(top+len/2+26*Math.sin(a)),1,1,'#ffffff');}
  const gw=14+2*Math.floor(k/4),gx=20-gw/2;
- r(gx,62,gw,3,T.g);r(gx,62,gw,1,'rgba(255,255,255,.35)');
+ sw.globalAlpha=.4;r(gx+2,64,gw,3,'#000000');sw.globalAlpha=1;r(gx,62,gw,3,T.g);r(gx,62,gw,1,'rgba(255,255,255,.4)');r(gx,64,gw,1,'rgba(0,0,0,.35)');
  if(k>=10){r(gx-1,59,2,4,T.g);r(gx+gw-1,59,2,4,T.g);}else{r(gx-1,63,1,3,T.g);r(gx+gw,63,1,3,T.g);}
  if(k>=8)r(19,62,2,2,gl);
  r(18,65,4,12,'#5a3628');for(let y=67;y<77;y+=3)r(18,y,4,1,'#3b2430');
- r(17,77,6,4,T.g);r(18,81,4,1,T.g);if(k>=13)r(19,78,2,2,gl);
+ r(21,65,1,12,'rgba(0,0,0,.3)');r(17,77,6,4,T.g);r(18,81,4,1,T.g);r(17,77,3,1,'rgba(255,255,255,.4)');r(22,78,1,3,'rgba(0,0,0,.3)');if(k>=13)r(19,78,2,2,gl);
 }
 
 /* ---------- reels ---------- */
@@ -430,7 +477,10 @@ function render(){
  const shopOpen=S.day%3===0,wait=3-S.day%3;
  if(!shopOpen)document.querySelectorAll('[data-buy]').forEach(b=>b.disabled=true);
  $('#shopNote').textContent=shopOpen?'상인이 오늘 대장간에 와 있습니다. 화덕을 끄면 떠납니다.':'상인은 3일마다 찾아옵니다. 지금은 살 수 없고, 다음 방문까지 '+wait+'일 남았습니다.';
- $('#bShop').textContent=shopOpen?'상인 (방문 중)':'상인 ('+wait+'일 뒤)';
+ const tm=$('#tagMer');tm.textContent=shopOpen?'상인 방문 중':'상인 '+wait+'일 뒤';tm.className='tag'+(shopOpen?' on':'');
+ const tl=$('#tagLet');tl.textContent=S.unread?'새 편지':'딸의 편지';tl.className='tag'+(S.unread?' on':'');
+ const lu=$('#letters');lu.textContent='';if(!S.letters.length)lu.appendChild(el('li',null,'아직 편지가 오지 않았습니다. 멀리 탑의 창에 불빛만 보입니다.'));
+ S.letters.forEach(x=>lu.appendChild(el('li','k-saved',x.d+'일째 밤 · '+x.t)));
  $('#forgeT').textContent='대장간 증축 Lv.'+S.forge;
  $('#forgeD').textContent=S.forge>=5?'강화 비용 −20%, 판매가 +40%. 더 올릴 수 없습니다.':'다음 단계: 강화 비용 −'+S.forge*5+'%, 판매가 +'+S.forge*10+'%, 무기고 +1칸'+(S.forge%2===0?', 하루 배달 +1자루':'');
  $('#sBest').textContent='+'+S.best;$('#sSold').textContent=fmt(S.sold);$('#sSpins').textContent=fmt(S.spins);$('#sBroken').textContent=fmt(S.broken);
@@ -488,7 +538,7 @@ function sell(){
 }
 function buy(k){
  if(busy||S.day%3!==0)return;
- if(k==='forge'){if(S.forge>=5)return;const p=FORGE_COST[S.forge-1];if(S.credits<p)return;S.credits-=p;S.forge++;say('대장간을 Lv.'+S.forge+'로 증축했습니다. 벽에 검 한 자루가 더 걸렸습니다.','sell');}
+ if(k==='forge'){if(S.forge>=5)return;const p=FORGE_COST[S.forge-1];if(S.credits<p)return;S.credits-=p;S.forge++;say('대장간을 Lv.'+S.forge+'로 증축했습니다.','sell');}
  SFX.coin();render();
 }
 /* ---------- story: cellar, nights, tribute, ending ---------- */
@@ -500,7 +550,7 @@ function fresh(){S=DEF();reels.forEach((r,i)=>r.cur=S.last[i]);$('#result').text
 function hide(){if(busy||!S.hasSword||S.level<1||S.cellar.length>=cap())return;const l=S.level,e=S.el;S.cellar.push({l,e});takeNext();
  say(swName(l,e)+'을 방어 무기고에 걸었습니다.','saved');SFX.undo();render();}
 function takeOut(i){if(busy||S.hasSword)return;const o=S.cellar.splice(i,1)[0];S.level=o.l;S.el=o.e;S.hasSword=true;say(swName(o.l,o.e)+'을 무기고에서 꺼내 모루에 올렸습니다.','keep');render();}
-const LETTER=['"저는 괜찮아요. 창밖으로 대장간 쪽 하늘이 보여요."','"오늘은 빵을 하나 더 받았어요."','"밤마다 망치 소리를 떠올려요. 꼭 다시 만나요."'];
+const LETTER=['"저는 괜찮아요. 창밖으로 대장간 쪽 하늘이 보여요."','"오늘은 빵을 하나 더 받았어요."','"밤마다 망치 소리를 떠올려요. 꼭 다시 만나요."','"탑 아래로 상인 수레가 지나가는 걸 봤어요. 대장간에도 들르나요?"','"병사들이 오크 이야기를 해요. 밤에 조심하세요."','"할아버지 망치는 잘 있나요? 저는 아직 그 소리를 기억해요."','"창살 사이로 별을 세다가 잠들어요. 서른 개까지 셌어요."','"성이 시끄러워요. 축제를 준비한대요."','"곧 볼 수 있을 것 같은 기분이 들어요. 기다릴게요."'];
 const NIGHT={1:'빈 대장간에 망치 소리가 혼자 울렸다. 산 쪽에서 북소리가 들린다. 내일 밤부터 오크가 내려온다.',5:'이웃이 말했다. "오크는 검 없는 집부터 턴다네. 무기고를 채워 두게."',10:'아버지의 망치 자루에서 새겨진 글자를 찾았다. "낮에는 벼리고, 밤에는 지켜라."',15:'절반이 지났다. 성벽 위 횃불이 어제보다 늘었다.',20:'오크를 막아낸 소문이 퍼졌다. 이웃들이 대장간 앞에 모이기 시작했다.',25:'성에서 축제 준비가 시작됐다. 근위대가 자리를 비우는 밤이 온다.',29:'내일이 마지막 밤이다. 무기고의 검을 하나씩 닦았다.'};
 function battle(a,b){let ha=40+a*10,hb=40+b*10,t=0;const ma=ha,mb=hb,ev=[];
  while(ha>0&&hb>0&&ev.length<120){const me=t%2===0,pw=me?a:b,d=Math.round((6+pw*2)*(.6+Math.random()*.8));if(me)hb=Math.max(0,hb-d);else ha=Math.max(0,ha-d);ev.push({me,d,ha:ha/ma,hb:hb/mb});t++;}
@@ -508,7 +558,7 @@ function battle(a,b){let ha=40+a*10,hb=40+b*10,t=0;const ma=ha,mb=hb,ev=[];
 function endDay(){if(busy)return;clearTimeout(sellArm);sellArm=0;
  if(S.day>=30)return uprising();
  const d=S.day,ev=[],due=tribOf(d),earn=S.earn,def=defense(),orcs=S.orc;let raid=null;
- if(S.credits>=due){S.credits-=due;ev.push('징수관에게 상납금 '+fmt(due)+' 크레딧을 냈습니다.');if(d%3===0)ev.push('딸의 편지: '+LETTER[(d/3|0)%3]);}
+ if(S.credits>=due){S.credits-=due;ev.push('징수관에게 상납금 '+fmt(due)+' 크레딧을 냈습니다.');if(d%3===0){S.letters.unshift({d,t:LETTER[(d/3-1)%LETTER.length]});S.unread=true;ev.push('딸의 편지가 책상 위에 놓였습니다.');}}
  else{const got=S.credits;S.credits=0;S.kid=Math.max(0,S.kid-1);ev.push('상납금 '+fmt(due)+' 크레딧 중 '+fmt(got)+'밖에 내지 못했습니다. 징수관이 얼굴을 굳혔습니다.',S.kid>0?'딸의 안부가 나빠졌습니다.':'성에서 소식이 완전히 끊겼습니다.');}
  if(d>=2){raid=battle(def,orcs);
   if(raid.win){const loot=20+orcs*12;S.credits+=loot;S.repel++;ev.push('오크 무리(전력 '+orcs+')를 막아냈습니다. 전리품 '+fmt(loot)+' 크레딧.');
@@ -557,7 +607,7 @@ function soldier(x,torch){const k='#080b16';R(x,60,10,28,k);R(x+1,50,8,10,k);R(x
  if(torch){A(.22,()=>R(x-11,40,16,16,'#ff8c3c'));R(x-4,52,2,14,'#5a3628');R(x-5,46+(f%2),4,6,'#ffb347');R(x-4,48+(f%2),2,3,'#fff3c4');}}
 function orc(x){R(x,62,12,26,'#2f4a2a');R(x+1,52,10,10,'#4a7a3a');R(x+2,60,1,2,'#f6e7c8');R(x+8,60,1,2,'#f6e7c8');R(x+3,55,2,1,'#ffd23d');R(x+7,55,2,1,'#ffd23d');R(x-4,50,3,24,'#5a3628');R(x-5,45,5,7,'#6b7183');}
 const INTRO=[
- {c:'아버지의 모루 소리로 하루가 시작되던 대장간.',d(){base({smith:true,sword:true});oldman(64);girl(148);}},
+ {c:'아버지의 모루 소리로 하루가 시작되던 대장간.',d(){base({smith:true,sword:true});oldman(70);girl(151);}},
  {c:'어느 밤, 왕의 병사들이 문을 부쉈다. 아버지와 딸이 끌려갔다.',d(){base({smith:false,sword:false},'#3a0d12',.4);soldier(38,true);soldier(96,false);soldier(150,true);}},
  {c:'왕은 대장장이 집안의 솜씨를 시험하겠다고 했다. 그리고 본보기가 필요하다고 했다.',d(){
   R(0,0,W,H,'#12060c');[20,56,136,172].forEach(x=>{R(x,0,10,96,'#22101a');R(x,0,2,96,'#34182a');});
@@ -567,7 +617,7 @@ const INTRO=[
   R(92,58,16,24,'#0a0508');R(95,48,10,10,'#0a0508');R(95,45,10,3,'#ffd23d');R(95,43,2,2,'#ffd23d');R(99,42,2,3,'#ffd23d');R(103,43,2,2,'#ffd23d');
   if(f%30>2){R(97,52,2,1,'#ef5350');R(101,52,2,1,'#ef5350');}
   [60,138].forEach(x=>{A(.2,()=>R(x-6,28,14,16,'#ff8c3c'));R(x,40,2,8,'#5a3628');R(x-1,33+(f%2),4,7,'#ffb347');});}},
- {c:'돌아온 것은 아버지의 망치 하나였다.',d(){base({smith:false,sword:false},'#0a1a44',.5);A(.12,()=>R(86,30,30,46,'#cfe0ff'));R(92,74,14,2,'#8a5639');R(104,69,6,7,'#c9d2e6');R(104,75,6,1,'#6b7183');R(96,73,3,4,'#f6e7c8');}},
+ {c:'돌아온 것은 아버지의 망치 하나였다.',d(){base({smith:false,sword:false},'#0a1a44',.5);A(.12,()=>R(86,30,30,46,'#cfe0ff'));R(92,77,14,2,'#8a5639');R(104,72,6,7,'#c9d2e6');R(104,78,6,1,'#6b7183');R(96,76,3,4,'#f6e7c8');}},
  {c:'"딸을 살리고 싶으면 매일 밤 상납금을 바쳐라."',d(){
   R(0,0,W,H,'#070d1e');STARS.forEach((s,i)=>{if((f+i*7)%23>2)R(s[0],s[1]+4,1,1,'#cfe0ff');});disc(40,24,9,'#ffe7a3');disc(36,21,8,'#070d1e');
   R(0,84,W,28,'#0a0d18');for(let x=0;x<W;x+=12)R(x,78,7,6,'#0a0d18');
@@ -591,7 +641,7 @@ document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buy(b.dataset.b
 $('#mute').onclick=e=>{muted=!muted;e.currentTarget.setAttribute('aria-pressed',muted);e.currentTarget.textContent=muted?'소리 꺼짐':'소리 켜짐';};
 $('#reset').onclick=()=>{if(busy)return;if(!resetArm){resetArm=setTimeout(()=>{resetArm=0;render();},3000);render();return;}
  clearTimeout(resetArm);resetArm=0;fresh();};
-document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{$('#'+b.dataset.open).hidden=false;});
+document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{$('#'+b.dataset.open).hidden=false;if(b.dataset.open==='shLetter'&&S.unread){S.unread=false;render();}});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{b.closest('.ov').hidden=true;});
 $('#bHide').onclick=hide;$('#bEnd').onclick=endDay;$('#bIntro').onclick=intro;
 
