@@ -3,276 +3,225 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gothic+A1:wght@400;600;800&family=Press+Start+2P&display=swap">
 <style>
-/* Layout: night forge scene on top-left as the stage, forging console under it, ledger column (odds, shop, journal) on the right; stacks to one column on phones. Single committed night look. */
+/* Layout: one screen, no page scroll. The night forge canvas fills the whole stage; status chips sit on the sky, every control sits on the wooden deck below the forge. Single committed night look. */
 :root{
   color-scheme:dark;
   --night:#0c1730; --deep:#070d1e; --panel:#16223f; --panel-hi:#22325a;
   --wood:#5a3628; --wood-hi:#8a5639;
   --lantern:#ffb347; --ember:#ff6b3d; --teal:#3fc1b0; --gold:#ffd23d;
   --paper:#f6e7c8; --mute:#9fb0d0; --slate:#56627f; --crack:#c46be0; --danger:#ef5350;
+  --glass:rgba(7,13,30,.78);
   --f-display:"Do Hyeon","Gothic A1","Malgun Gothic",sans-serif;
   --f-body:"Gothic A1","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
   --f-num:"Press Start 2P","Do Hyeon",monospace;
 }
 *{box-sizing:border-box}
-body{background:var(--night);color:var(--paper);font-family:var(--f-body);font-size:15px;line-height:1.5;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 32px}
-.app{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
-h1,h2{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance}
-h1{font-size:30px;color:var(--lantern);letter-spacing:.02em;text-shadow:3px 3px 0 var(--deep)}
-h2{font-size:20px;color:var(--lantern)}
+html,body{height:100%}
+body{background:var(--deep);color:var(--paper);font-family:var(--f-body);font-size:14px;line-height:1.4;overflow:hidden}
 canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 button{font:inherit;color:inherit;cursor:pointer}
-button:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+button:focus-visible{outline:3px solid var(--teal);outline-offset:1px}
+h1,h2{font-family:var(--f-display);font-weight:400;margin:0}
+h2{font-size:22px;color:var(--lantern)}
 
-.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.top h1{margin-right:auto}
-.purse{display:flex;align-items:center;gap:8px;background:var(--deep);border:3px solid var(--wood-hi);padding:8px 12px;font-family:var(--f-num);font-size:14px;color:var(--gold);font-variant-numeric:tabular-nums}
-.coin{width:12px;height:12px;background:var(--gold);box-shadow:inset -3px -3px 0 #c58a1a,0 0 0 2px #7a4e0c}
-.ghost{background:transparent;border:3px solid var(--panel-hi);padding:6px 10px;color:var(--mute);font-size:13px}
-.ghost:hover{color:var(--paper);border-color:var(--mute)}
+.game{position:relative;height:100%;max-width:480px;margin:0 auto;overflow:hidden;background:var(--night)}
+#scene{position:absolute;inset:0;width:100%;height:100%}
+.hud{position:absolute;inset:0;display:flex;flex-direction:column;gap:6px;padding-block:8px 10px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tophud{display:flex;flex-direction:column;gap:6px}
+.top{display:flex;align-items:center;gap:8px}
+.top h1{font-size:22px;color:var(--lantern);text-shadow:2px 2px 0 var(--deep);margin-right:auto}
+.purse{display:flex;align-items:center;gap:6px;background:var(--deep);border:2px solid var(--wood-hi);padding:5px 8px;font-family:var(--f-num);font-size:12px;color:var(--gold);font-variant-numeric:tabular-nums}
+.coin{width:10px;height:10px;background:var(--gold);box-shadow:inset -2px -2px 0 #c58a1a}
+.ghost{background:var(--glass);border:2px solid var(--panel-hi);padding:6px 8px;color:var(--paper);font-size:12px}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.status{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:0}
+.status div{background:var(--glass);border:2px solid var(--deep);padding:3px 5px;min-width:0}
+.status dt{color:var(--mute);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status dd{margin:0;font-weight:800;font-size:12px;display:flex;gap:3px;align-items:center;min-height:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pip{width:8px;height:8px;border:2px solid var(--lantern);flex:0 0 auto}
+.pip.on{background:var(--lantern)}
+.pip.h{border-color:var(--danger)}
+.pip.h.on{background:var(--danger)}
 
-.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:16px;align-items:start}
-.stage,.side{display:flex;flex-direction:column;gap:16px;min-width:0}
-.panel{background:var(--panel);border:3px solid var(--deep);box-shadow:inset 0 0 0 3px var(--panel-hi);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
-
-.scene-wrap{position:relative;border:3px solid var(--deep);box-shadow:0 0 0 3px var(--wood)}
-#scene{width:100%;aspect-ratio:200/112;height:auto}
-.banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-family:var(--f-display);font-size:clamp(34px,8vw,64px);
-  text-shadow:4px 0 0 var(--deep),-4px 0 0 var(--deep),0 4px 0 var(--deep),0 -4px 0 var(--deep),4px 4px 0 var(--deep);animation:pop .9s steps(6) both}
+.artgap{position:relative;flex:1 1 0;min-height:0}
+.banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-family:var(--f-display);font-size:clamp(30px,10vw,52px);
+  text-shadow:3px 0 0 var(--deep),-3px 0 0 var(--deep),0 3px 0 var(--deep),0 -3px 0 var(--deep),3px 3px 0 var(--deep);animation:pop .7s steps(6) both}
 @keyframes pop{0%{transform:scale(.4);opacity:0}30%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
-.k-great3,.k-great2{color:var(--gold)} .k-up{color:var(--teal)} .k-keep{color:var(--mute)} .k-down{color:var(--crack)} .k-destroy{color:var(--danger)} .k-saved{color:var(--lantern)}
+.k-great3,.k-great2{color:var(--gold)} .k-up{color:var(--teal)} .k-keep{color:var(--mute)} .k-down{color:var(--crack)} .k-destroy{color:var(--danger)} .k-saved,.k-sell{color:var(--lantern)}
 
-.console-top{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
-.swordbox{background:var(--deep);border:3px solid var(--panel-hi);padding:6px}
-#sword{width:80px;height:176px}
-.swordinfo{display:flex;flex-direction:column;gap:10px;min-width:0}
-.lvrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.lv{font-family:var(--f-num);font-size:30px;color:var(--gold);text-shadow:3px 3px 0 var(--deep)}
-.nm{font-family:var(--f-display);font-size:24px}
-.val{color:var(--mute);font-size:14px}
+.deckui{display:flex;flex-direction:column;gap:6px}
+.swrow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;background:var(--glass);border:2px solid var(--deep);padding:6px}
+#sword{width:44px;height:97px}
+.swinfo{display:flex;flex-direction:column;gap:3px;min-width:0}
+.lvrow{display:flex;align-items:baseline;gap:8px;min-width:0}
+.lv{font-family:var(--f-num);font-size:19px;color:var(--gold);flex:0 0 auto}
+.nm{font-family:var(--f-display);font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.val{color:var(--mute);font-size:12px}
 .val b{color:var(--paper);font-variant-numeric:tabular-nums}
-.reels{display:flex;gap:10px}
-.reel{width:84px;height:84px;max-width:30%;aspect-ratio:1;height:auto;border:3px solid var(--deep);box-shadow:0 0 0 3px var(--wood-hi)}
-.result{margin:0;min-height:3em;font-weight:600}
-
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.tog{background:var(--deep);border:3px solid var(--panel-hi);padding:8px 12px;font-size:14px;color:var(--mute);display:flex;align-items:center;gap:8px}
-.tog[aria-pressed="true"]{border-color:var(--lantern);color:var(--paper)}
-.tog .box{width:12px;height:12px;border:2px solid currentColor}
-.tog[aria-pressed="true"] .box{background:var(--lantern);border-color:var(--lantern)}
-.tog:disabled{opacity:.45;cursor:not-allowed}
-.btn{font-family:var(--f-display);font-size:19px;border:3px solid var(--deep);padding:10px 16px;color:var(--deep);background:var(--lantern);box-shadow:0 5px 0 #a35a1c;flex:1 1 150px;display:flex;flex-direction:column;align-items:center;line-height:1.2}
-.btn small{font-family:var(--f-body);font-size:12px;font-weight:800}
-.btn:active:not(:disabled){transform:translateY(5px);box-shadow:none}
-.btn.sell{background:#ffe08a;box-shadow:0 5px 0 #a8811f}
-.btn.hide{background:var(--teal);box-shadow:0 5px 0 #1f7a6e}
-.btn.end{background:#33405c;color:var(--paper);box-shadow:0 5px 0 #1a2238}
-.btn.undo{background:#c9b6ff;box-shadow:0 5px 0 #6c58a8}
-.btn:disabled{background:var(--slate);box-shadow:0 5px 0 #303a52;color:#b8c2d8;cursor:not-allowed}
-
-.bar{display:flex;height:14px;border:3px solid var(--deep);background:var(--deep)}
+.reels{display:flex;gap:8px}
+.reel{width:50px;height:50px;border:2px solid var(--deep);box-shadow:0 0 0 2px var(--wood-hi)}
+.chance{display:flex;flex-direction:column;gap:4px}
+.bar{display:flex;height:10px;border:2px solid var(--deep);background:var(--deep)}
 .bar i{display:block;height:100%}
+.chance-t{margin:0;display:flex;flex-wrap:wrap;gap:0 10px;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;text-shadow:1px 1px 0 var(--deep)}
+.result{margin:0;min-height:2.8em;font-size:12px;font-weight:600;text-shadow:1px 1px 0 var(--deep);color:var(--paper)}
+.row{display:flex;gap:6px}
+.btn{flex:1 1 0;min-width:0;font-family:var(--f-display);font-size:17px;border:2px solid var(--deep);padding:6px;color:var(--deep);background:var(--lantern);box-shadow:0 4px 0 #a35a1c;display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.btn small{font-family:var(--f-body);font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.btn.big{flex:1.6 1 0}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:none}
+.btn.sell{background:#ffe08a;box-shadow:0 4px 0 #a8811f}
+.btn.hide{background:var(--teal);box-shadow:0 4px 0 #1f7a6e}
+.btn.end{background:#33405c;color:var(--paper);box-shadow:0 4px 0 #1a2238}
+.btn:disabled{background:var(--slate);box-shadow:0 4px 0 #303a52;color:#c3cce0;cursor:not-allowed}
+.rack{display:flex;align-items:center;gap:8px;min-height:26px;min-width:0}
+.tix{flex:0 0 auto;color:var(--mute);font-size:12px;font-weight:800;text-shadow:1px 1px 0 var(--deep)}
+.cellar{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;min-width:0}
+.cellar li{flex:0 0 auto;white-space:nowrap;background:var(--glass);border:2px solid var(--teal);padding:2px 6px;font-size:11px;display:flex;gap:6px;align-items:center}
+.nav .ghost{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* sheets and night overlays */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(5,9,22,.95);display:grid;place-items:center;overflow:auto;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.ovbox{width:100%;max-width:480px;display:flex;flex-direction:column;gap:12px}
+.ovbox canvas{max-width:100%}
+.ovbox>canvas{width:100%;aspect-ratio:200/112;height:auto;border:3px solid var(--deep);box-shadow:0 0 0 3px var(--wood)}
+.ovbox h2{font-size:26px}
+.ovbox p{margin:0}
+.ovbox>.btn{flex:0 0 auto}
+.panel{background:var(--panel);border:3px solid var(--deep);box-shadow:inset 0 0 0 3px var(--panel-hi);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.cap{font-family:var(--f-display);font-size:20px;min-height:3.2em;text-wrap:balance}
+.ovlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ovlist li{padding-left:10px;border-left:3px solid var(--slate)}
+.note{margin:0;color:var(--mute);font-size:13px}
 .odds{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.odds li{display:grid;grid-template-columns:12px 62px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px}
+.odds li{display:grid;grid-template-columns:12px 58px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:13px}
 .sw{width:12px;height:12px}
 .combo{display:flex;gap:2px}
 .mini{width:18px;height:18px}
-.odds b{font-weight:800}
 .pct{font-variant-numeric:tabular-nums;font-weight:800;text-align:right}
-.note{margin:0;color:var(--mute);font-size:13px}
-
 .shop{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
 .shop li{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center}
 .ico{width:36px;height:36px;background:var(--deep)}
 .shop strong{font-family:var(--f-display);font-weight:400;font-size:17px;display:block}
 .shop span{color:var(--mute);font-size:13px;display:block}
-.buy{background:var(--deep);border:3px solid var(--wood-hi);padding:6px 10px;font-family:var(--f-num);font-size:11px;color:var(--gold);white-space:nowrap}
-.buy:hover:not(:disabled){border-color:var(--lantern)}
+.buy{background:var(--deep);border:2px solid var(--wood-hi);padding:5px 8px;font-family:var(--f-num);font-size:10px;color:var(--gold);white-space:nowrap}
 .buy:disabled{opacity:.4;cursor:not-allowed}
-
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
 .stats div{background:var(--deep);padding:8px}
 .stats dt{color:var(--mute);font-size:12px}
 .stats dd{margin:0;font-weight:800;font-variant-numeric:tabular-nums}
 .log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px}
-.log li{padding-left:10px;border-left:3px solid var(--slate);overflow-wrap:anywhere}
+.log li{padding-left:10px;border-left:3px solid var(--slate);overflow-wrap:anywhere;color:var(--paper)}
 .log .k-great3,.log .k-great2{border-color:var(--gold)} .log .k-up{border-color:var(--teal)} .log .k-down{border-color:var(--crack)} .log .k-destroy{border-color:var(--danger)} .log .k-saved,.log .k-sell{border-color:var(--lantern)}
-.log li{color:var(--paper)}
-
-.status{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0}
-.status div{background:var(--panel);border:3px solid var(--deep);padding:8px;min-width:0}
-.status dt{color:var(--mute);font-size:12px}
-.status dd{margin:0;font-weight:800;font-variant-numeric:tabular-nums;display:flex;gap:4px;align-items:center;flex-wrap:wrap;min-height:24px}
-.pip{width:12px;height:12px;border:2px solid var(--lantern)}
-.pip.on{background:var(--lantern)}
-.pip.h{border-color:var(--danger)}
-.pip.h.on{background:var(--danger)}
-.meter{flex:1 1 40px;height:10px;background:var(--panel-hi)}
-.meter i{display:block;height:100%;background:var(--danger)}
-.cellar{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.cellar li{background:var(--deep);border:3px solid var(--teal);padding:6px 10px;font-size:13px;display:flex;gap:8px;align-items:center}
-.ov{position:fixed;inset:0;z-index:50;background:rgba(5,9,22,.95);display:grid;place-items:center;overflow:auto;
-  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.ovbox{width:100%;max-width:640px;display:flex;flex-direction:column;gap:14px}
-.ovbox canvas{width:100%;aspect-ratio:200/112;height:auto;border:3px solid var(--deep);box-shadow:0 0 0 3px var(--wood)}
-.ovbox h2{font-size:28px}
-.ovbox p{margin:0}
-.ovbox>.btn{flex:0 0 auto}
-.cap{font-family:var(--f-display);font-size:22px;min-height:3.2em;text-wrap:balance}
-.ovlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.ovlist li{padding-left:10px;border-left:3px solid var(--slate)}
-.ahead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.tix{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:13px}
-.tix i{width:12px;height:12px;border:2px solid var(--lantern)}
-.tix i.on{background:var(--lantern)}
-.opps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.opps li{background:var(--deep);padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
-.opps strong{font-family:var(--f-display);font-weight:400;font-size:17px}
-.opps span{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
-.opps span b{color:var(--paper)}
-.fight{display:flex;flex-direction:column;gap:8px}
-.hp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:10px;align-items:center;font-size:13px}
+.hp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px;align-items:center;font-size:13px}
 .hpbar{height:14px;background:var(--deep);border:3px solid var(--deep);box-shadow:0 0 0 2px var(--panel-hi)}
 .hpbar i{display:block;height:100%;width:100%;background:var(--teal)}
-#hpOp{background:var(--ember)}
-.grid{grid-template-columns:minmax(0,1fr)}
-.chance{display:flex;flex-direction:column;gap:6px}
-.chance-t{margin:0;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
-.app{max-width:780px}
-.ghost:disabled{opacity:.45;cursor:not-allowed}
-
-@media (max-width:780px){
-  .opps{grid-template-columns:minmax(0,1fr)}
-  .status{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .grid{grid-template-columns:minmax(0,1fr)}
-  #sword{width:60px;height:132px}
-  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .lv{font-size:24px}.nm{font-size:21px}
-}
+@media (max-height:640px){#sword{width:36px;height:79px}.reel{width:42px;height:42px}.btn{font-size:15px;padding:4px 6px}.result{min-height:1.4em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 @media (prefers-reduced-motion:reduce){.banner{animation:none}}
 </style>
 
-<div class="app">
-  <header class="top">
-    <h1>룬 대장간</h1>
-    <div class="purse" title="크레딧"><span class="coin"></span><span id="credits">0</span></div>
-    <button id="mute" class="ghost" aria-pressed="false">소리 켜짐</button>
-  </header>
-
-  <dl class="status">
-    <div><dt>날짜</dt><dd id="stDay"></dd></div>
-    <div><dt>남은 녹슨 검</dt><dd id="stStock"></dd></div>
-    <div><dt>오늘 밤 상납금</dt><dd id="stTrib"></dd></div>
-    <div><dt>딸의 안부</dt><dd id="stKid"></dd></div>
-    <div><dt>방어력 / 오늘 밤 오크</dt><dd id="stPow"></dd></div>
-  </dl>
-
-  <main class="grid">
-    <section class="stage">
-      <div class="scene-wrap">
-        <canvas id="scene" width="200" height="112" aria-label="밤의 대장간. 모루 위에 검이 놓여 있고 대장장이가 망치를 들고 있다."></canvas>
-        <div id="banner" class="banner" hidden></div>
-      </div>
-
-      <div class="panel">
-        <div class="console-top">
-          <div class="swordbox"><canvas id="sword" width="40" height="88" aria-hidden="true"></canvas></div>
-          <div class="swordinfo">
-            <div class="lvrow"><span class="lv" id="lv">+0</span><span class="nm" id="nm">녹슨 검</span></div>
-            <div class="val">지금 팔면 <b id="sellv">0</b> 크레딧</div>
-            <div class="reels" id="reels">
-              <canvas class="reel" width="20" height="20"></canvas>
-              <canvas class="reel" width="20" height="20"></canvas>
-              <canvas class="reel" width="20" height="20"></canvas>
-            </div>
+<div class="game">
+  <canvas id="scene" width="200" height="112" aria-label="밤의 대장간. 모루 위에 검이 놓여 있고 대장장이가 망치를 들고 있다."></canvas>
+  <div class="hud">
+    <div class="tophud">
+      <header class="top">
+        <h1>룬 대장간</h1>
+        <div class="purse" title="크레딧"><span class="coin"></span><span id="credits">0</span></div>
+        <button id="mute" class="ghost" aria-pressed="false">소리 켜짐</button>
+      </header>
+      <dl class="status">
+        <div><dt>날짜</dt><dd id="stDay"></dd></div>
+        <div><dt>녹슨 검</dt><dd id="stStock"></dd></div>
+        <div><dt>밤 상납금</dt><dd id="stTrib"></dd></div>
+        <div><dt>딸의 안부</dt><dd id="stKid"></dd></div>
+        <div><dt>방어/오크</dt><dd id="stPow"></dd></div>
+      </dl>
+    </div>
+    <div class="artgap"><div id="banner" class="banner" hidden></div></div>
+    <div class="deckui">
+      <div class="swrow">
+        <canvas id="sword" width="40" height="88" aria-hidden="true"></canvas>
+        <div class="swinfo">
+          <div class="lvrow"><span class="lv" id="lv">+0</span><span class="nm" id="nm">녹슨 검</span></div>
+          <div class="val">지금 팔면 <b id="sellv">0</b> 크레딧</div>
+          <div class="reels" id="reels">
+            <canvas class="reel" width="20" height="20"></canvas>
+            <canvas class="reel" width="20" height="20"></canvas>
+            <canvas class="reel" width="20" height="20"></canvas>
           </div>
         </div>
-        <div class="chance"><div class="bar" aria-hidden="true"><i id="mG" style="background:var(--gold)"></i><i id="mU" style="background:var(--teal)"></i><i id="mK" style="background:var(--slate)"></i><i id="mD" style="background:var(--crack)"></i><i id="mX" style="background:var(--danger)"></i></div><p class="chance-t" id="mTxt" aria-label="이번 강화 확률"></p></div>
-        <p id="result" class="result" aria-live="polite"></p>
-        <div class="row">
-          <button id="tFlux" class="tog" aria-pressed="false"><span class="box"></span><span id="tFluxL">불꽃 촉매 넣기</span></button>
-          <button id="tWard" class="tog" aria-pressed="false"><span class="box"></span><span id="tWardL">파괴 방지권 걸기</span></button>
-        </div>
-        <div class="row">
-          <button id="bEnh" class="btn"><span>강화하기</span><small id="bEnhS"></small></button>
-          <button id="bSell" class="btn sell"><span id="bSellT">암시장에 팔기</span><small id="bSellS"></small></button>
-          <button id="bHide" class="btn hide"><span>방어용으로 보관</span><small id="bHideS"></small></button>
-          <button id="bUndo" class="btn undo"><span>시간 돌리기</span><small id="bUndoS"></small></button>
-        </div>
-        <div class="row">
-          <button id="bEnd" class="btn end"><span>화덕 끄기</span><small id="bEndS"></small></button>
-        </div>
-        <div class="row">
-          <button class="ghost" data-open="shOdds">룬 조합표</button>
-          <button class="ghost" id="bShop" data-open="shShop">상인</button>
-          <button class="ghost" data-open="shLog">도감·일지</button>
-        </div>
       </div>
-
-      <div class="panel">
-        <div class="ahead"><h2>방어 무기고</h2><span class="tix" id="celCap"></span></div>
-        <ul class="cellar" id="cellar"></ul>
-        <p class="note" id="celNote"></p>
+      <div class="chance"><div class="bar" aria-hidden="true"><i id="mG" style="background:var(--gold)"></i><i id="mU" style="background:var(--teal)"></i><i id="mK" style="background:var(--slate)"></i><i id="mD" style="background:var(--crack)"></i><i id="mX" style="background:var(--danger)"></i></div><p class="chance-t" id="mTxt" aria-label="이번 강화 확률"></p></div>
+      <p id="result" class="result" aria-live="polite"></p>
+      <div class="row">
+        <button id="bEnh" class="btn big"><span>강화하기</span><small id="bEnhS"></small></button>
+        <button id="bEnd" class="btn end"><span>화덕 끄기</span><small id="bEndS"></small></button>
       </div>
-
-    </section>
-
-  </main>
+      <div class="row">
+        <button id="bSell" class="btn sell"><span id="bSellT">암시장에 팔기</span><small id="bSellS"></small></button>
+        <button id="bHide" class="btn hide"><span>방어용 보관</span><small id="bHideS"></small></button>
+      </div>
+      <div class="rack"><span class="tix" id="celCap"></span><ul class="cellar" id="cellar"></ul></div>
+      <div class="row nav">
+        <button class="ghost" data-open="shOdds">룬 조합표</button>
+        <button class="ghost" id="bShop" data-open="shShop">상인</button>
+        <button class="ghost" data-open="shLog">도감·일지</button>
+      </div>
+    </div>
+  </div>
 </div>
+
 <div class="ov" id="shOdds" hidden><div class="ovbox">
-      <section class="panel">
-        <h2>룬 조합표</h2>
-        <div class="bar" id="bar" aria-hidden="true"><i id="sgG" style="background:var(--gold)"></i><i id="sgU" style="background:var(--teal)"></i><i id="sgK" style="background:var(--slate)"></i><i id="sgD" style="background:var(--crack)"></i><i id="sgX" style="background:var(--danger)"></i></div>
-        <ul class="odds">
-          <li><i class="sw" style="background:var(--gold)"></i><span class="combo"><canvas class="mini" data-spr="star" width="12" height="12"></canvas><canvas class="mini" data-spr="star" width="12" height="12"></canvas><canvas class="mini" data-spr="star" width="12" height="12"></canvas></span><span><b>대강화 +4</b> 별 셋</span><span class="pct" id="pG3"></span></li>
-          <li><i class="sw" style="background:var(--gold)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="flame" width="12" height="12"></canvas></span><span><b>대강화 +2</b> 불꽃 셋 또는 망치 셋</span><span class="pct" id="pG2"></span></li>
-          <li><i class="sw" style="background:var(--teal)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="hammer" width="12" height="12"></canvas><canvas class="mini" data-spr="flame" width="12" height="12"></canvas></span><span><b>강화 +1</b> 길조(불꽃·망치·별)만 셋, 섞여도 됨</span><span class="pct" id="pU"></span></li>
-          <li><i class="sw" style="background:var(--slate)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="stone" width="12" height="12"></canvas><canvas class="mini" data-spr="hammer" width="12" height="12"></canvas></span><span><b>유지</b> 그 밖의 조합</span><span class="pct" id="pK"></span></li>
-          <li><i class="sw" style="background:var(--crack)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="crack" width="12" height="12"></canvas><canvas class="mini" data-spr="hammer" width="12" height="12"></canvas></span><span><b>손상 −1</b> 균열이 하나라도 뜸</span><span class="pct" id="pD"></span></li>
-          <li><i class="sw" style="background:var(--danger)"></i><span class="combo"><canvas class="mini" data-spr="skull" width="12" height="12"></canvas><canvas class="mini" data-spr="skull" width="12" height="12"></canvas><canvas class="mini" data-spr="stone" width="12" height="12"></canvas></span><span><b>파괴</b> 해골 둘 이상</span><span class="pct" id="pX"></span></li>
-        </ul>
-        <p class="note" id="oddsNote"></p>
-      </section>
-
-      <button class="btn end" data-close><span>닫기</span></button></div></div>
+  <section class="panel">
+    <h2>룬 조합표</h2>
+    <div class="bar" aria-hidden="true"><i id="sgG" style="background:var(--gold)"></i><i id="sgU" style="background:var(--teal)"></i><i id="sgK" style="background:var(--slate)"></i><i id="sgD" style="background:var(--crack)"></i><i id="sgX" style="background:var(--danger)"></i></div>
+    <ul class="odds">
+      <li><i class="sw" style="background:var(--gold)"></i><span class="combo"><canvas class="mini" data-spr="star" width="12" height="12"></canvas><canvas class="mini" data-spr="star" width="12" height="12"></canvas><canvas class="mini" data-spr="star" width="12" height="12"></canvas></span><span><b>대강화 +4</b> 별 셋</span><span class="pct" id="pG3"></span></li>
+      <li><i class="sw" style="background:var(--gold)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="flame" width="12" height="12"></canvas></span><span><b>대강화 +2</b> 불꽃 셋 또는 망치 셋</span><span class="pct" id="pG2"></span></li>
+      <li><i class="sw" style="background:var(--teal)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="hammer" width="12" height="12"></canvas><canvas class="mini" data-spr="star" width="12" height="12"></canvas></span><span><b>강화 +1</b> 길조(불꽃·망치·별)만 셋</span><span class="pct" id="pU"></span></li>
+      <li><i class="sw" style="background:var(--slate)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="stone" width="12" height="12"></canvas><canvas class="mini" data-spr="hammer" width="12" height="12"></canvas></span><span><b>유지</b> 그 밖의 조합</span><span class="pct" id="pK"></span></li>
+      <li><i class="sw" style="background:var(--crack)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="crack" width="12" height="12"></canvas><canvas class="mini" data-spr="hammer" width="12" height="12"></canvas></span><span><b>손상 −1</b> 균열이 하나라도 뜸</span><span class="pct" id="pD"></span></li>
+      <li><i class="sw" style="background:var(--danger)"></i><span class="combo"><canvas class="mini" data-spr="skull" width="12" height="12"></canvas><canvas class="mini" data-spr="skull" width="12" height="12"></canvas><canvas class="mini" data-spr="stone" width="12" height="12"></canvas></span><span><b>파괴</b> 해골 둘 이상</span><span class="pct" id="pX"></span></li>
+    </ul>
+    <p class="note" id="oddsNote"></p>
+  </section>
+  <button class="btn end" data-close><span>닫기</span></button></div></div>
 <div class="ov" id="shShop" hidden><div class="ovbox">
-      <section class="panel">
-        <h2>떠돌이 상인</h2>
-        <p class="note" id="shopNote"></p>
-        <ul class="shop">
-          <li><canvas class="ico" data-spr="flame" width="12" height="12"></canvas><div><strong>불꽃 촉매 <em id="nFlux"></em></strong><span>강화 한 번 동안 길조 룬이 1.3배 자주 나옵니다.</span></div><button class="buy" data-buy="flux"></button></li>
-          <li><canvas class="ico" data-spr="shield" width="12" height="12"></canvas><div><strong>파괴 방지권 <em id="nWard"></em></strong><span>파괴가 뜨면 대신 사라지고 검은 그대로 남습니다.</span></div><button class="buy" data-buy="ward"></button></li>
-          <li><canvas class="ico" data-spr="glass" width="12" height="12"></canvas><div><strong>시간의 모래 <em id="nGlass"></em></strong><span>방금 일어난 손상이나 파괴를 되돌립니다.</span></div><button class="buy" data-buy="glass"></button></li>
-          <li><canvas class="ico" data-spr="hammer" width="12" height="12"></canvas><div><strong id="forgeT">대장간 증축</strong><span id="forgeD"></span></div><button class="buy" data-buy="forge"></button></li>
-        </ul>
-      </section>
-
-      <button class="btn end" data-close><span>닫기</span></button></div></div>
+  <section class="panel">
+    <h2>떠돌이 상인</h2>
+    <p class="note" id="shopNote"></p>
+    <ul class="shop">
+      <li><canvas class="ico" data-spr="hammer" width="12" height="12"></canvas><div><strong id="forgeT">대장간 증축</strong><span id="forgeD"></span></div><button class="buy" data-buy="forge"></button></li>
+    </ul>
+  </section>
+  <button class="btn end" data-close><span>닫기</span></button></div></div>
 <div class="ov" id="shLog" hidden><div class="ovbox">
-      <section class="panel">
-        <h2>검 도감</h2>
-        <ul class="odds" id="dex"></ul>
-      </section>
-      <section class="panel">
-        <h2>대장간 일지</h2>
-        <dl class="stats">
-          <div><dt>최고 강화</dt><dd id="sBest"></dd></div>
-          <div><dt>판매 수익</dt><dd id="sSold"></dd></div>
-          <div><dt>강화 횟수</dt><dd id="sSpins"></dd></div>
-          <div><dt>부서진 검</dt><dd id="sBroken"></dd></div>
-        </dl>
-        <ul class="log" id="log"></ul>
-        <div class="row"><button id="bIntro" class="ghost">인트로 다시 보기</button><button id="reset" class="ghost">처음부터 다시</button></div>
-      </section>
-      <button class="btn end" data-close><span>닫기</span></button></div></div>
+  <section class="panel">
+    <h2>검 도감</h2>
+    <ul class="odds" id="dex"></ul>
+    <p class="note" id="celNote"></p>
+  </section>
+  <section class="panel">
+    <h2>대장간 일지</h2>
+    <dl class="stats">
+      <div><dt>최고 강화</dt><dd id="sBest"></dd></div>
+      <div><dt>판매 수익</dt><dd id="sSold"></dd></div>
+      <div><dt>강화 횟수</dt><dd id="sSpins"></dd></div>
+      <div><dt>부서진 검</dt><dd id="sBroken"></dd></div>
+    </dl>
+    <ul class="log" id="log"></ul>
+    <div class="row"><button id="bIntro" class="ghost">인트로 다시 보기</button><button id="reset" class="ghost">처음부터 다시</button></div>
+  </section>
+  <button class="btn end" data-close><span>닫기</span></button></div></div>
 <div class="ov" id="ov" hidden></div>
 
 <script>
 (()=>{
 const $=s=>document.querySelector(s);
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const MAXL=40, KEY='rune-forge-v4';
+const MAXL=40, KEY='rune-forge-v5';
 const SYM=['flame','hammer','star','stone','crack','skull'];
 const fmt=n=>Math.round(n).toLocaleString('ko-KR');
 
@@ -305,9 +254,8 @@ const mix=(a,b,t)=>{const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16),
 const formOf=l=>Math.min(20,Math.floor(l/2));
 function look(l,e){const k=formOf(l),E=ELS[e];if(!k)return{f:0,n:E.n+' 기운의 녹슨 검',b:'#8d7b6a',h:'#b09a86',g:'#6b5a4a',glow:null};
  const t=(k-1)/19,b=t<.5?mix(E.d,E.m,t*2):mix(E.m,E.h,(t-.5)*2);return{f:k,n:NAMES[e][k-1],b,h:mix(b,'#ffffff',.5),g:E.g,glow:k>=4?E.glow:null};}
-const PRICE={flux:80,ward:1200,glass:2000};
 const FORGE_COST=[800,3000,12000,45000];
-const DEF=()=>({credits:300,level:0,forge:1,items:{flux:2,ward:1,glass:1},arm:{flux:false,ward:true},best:0,sold:0,spins:0,broken:0,log:[{m:'1일째 아침. 병사들이 녹슨 검 3자루를 던져놓고 갔습니다. 밤마다 징수관이 상납금을 걷으러 옵니다.',k:'keep'}],last:['flame','hammer','stone'],
+const DEF=()=>({credits:300,level:0,forge:1,best:0,sold:0,spins:0,broken:0,log:[{m:'1일째 아침. 병사들이 녹슨 검 3자루를 던져놓고 갔습니다. 밤마다 징수관이 상납금을 걷으러 옵니다.',k:'keep'}],last:['flame','hammer','stone'],
  day:1,stock:2,hasSword:true,el:Math.random()*4|0,dex:[0,0,0,0],kid:3,cellar:[],earn:0,orc:0,repel:0,intro:false,ended:null});
 const supply=()=>Math.max(2,3+Math.floor((S.forge-1)/2));
 const cap=()=>2+S.forge;
@@ -319,7 +267,7 @@ const defense=()=>S.cellar.reduce((a,b)=>a+formOf(b.l)+1,0);
 const orcOf=d=>d<2?0:Math.round(d*.8+Math.random()*d*.3);
 function takeNext(){if(S.stock>0){S.stock--;S.hasSword=true;}else S.hasSword=false;S.level=0;S.el=Math.random()*4|0;}
 let S=DEF();
-try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S=Object.assign(DEF(),o);S.items=Object.assign(DEF().items,o.items);S.arm=Object.assign(DEF().arm,o.arm);if(!Array.isArray(S.cellar))S.cellar=[];if(!Array.isArray(S.dex))S.dex=[0,0,0,0];}}catch(e){}
+try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S=Object.assign(DEF(),o);if(!Array.isArray(S.cellar))S.cellar=[];if(!Array.isArray(S.dex))S.dex=[0,0,0,0];}}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
 
 const cost=L=>L===0?0:Math.round(6*Math.pow(1.25,L/2)*(1-.05*(S.forge-1)));
@@ -367,13 +315,18 @@ const STARS=[];for(let i=0;i<34;i++)STARS.push([(i*53+17)%W,(i*29+5)%24+1]);
 const BULB=['#ffc94a','#ff6b3d','#3fc1b0','#ffe9a8'];
 let f=0,busy=false,forging=false,parts=[],flash=0,flashCol='#fff';
 function burst(col,n,up){for(let i=0;i<n;i++)parts.push({x:100+Math.random()*10-5,y:73,vx:(Math.random()-.5)*5,vy:-Math.random()*(up?5:3)-1,l:8+Math.random()*8|0,c:col[i%col.length]});}
+let OY=0;
+function fit(){const cv=$('#scene'),g=cv.parentElement,w=g.clientWidth||400,h=g.clientHeight||700,u=w/200;
+ cv.height=Math.max(112,Math.min(560,Math.round(h/u)));
+ OY=Math.max(0,Math.min(cv.height-112,Math.ceil(($('.tophud').getBoundingClientRect().height+10)/u)-3));}
 function drawScene(){
- R(0,0,W,40,'#0a1430');R(0,40,W,22,'#10224a');R(0,62,W,26,'#17305e');
+ const main=sc.canvas&&sc.canvas.id==='scene',oy=main?OY:0,HH=(main?sc.canvas.height:H)-oy;sc.save();sc.translate(0,oy);
+ R(0,-oy,W,oy+40,'#0a1430');R(0,40,W,22,'#10224a');R(0,62,W,26,'#17305e');
  STARS.forEach((s,i)=>{if((f+i*7)%23>2)R(s[0],s[1],1,1,i%3?'#cfe0ff':'#fff3c4');});
  disc(170,15,7,'#ffe7a3');disc(167,13,6,'#0a1430');
  for(let x=0;x<W;x++){const h=8+Math.round(5*Math.sin(x/17)+3*Math.sin(x/7+2));R(x,80-h,1,h+8,'#0b1936');}
  // deck
- R(0,88,W,24,'#2b1a22');for(let y=93;y<H;y+=6)R(0,y,W,1,'#1c1017');for(let x=11;x<W;x+=27)R(x,88,1,24,'#1c1017');
+ R(0,88,W,HH-88,'#2b1a22');for(let y=93;y<HH;y+=6)R(0,y,W,1,'#1c1017');for(let x=11;x<W;x+=27)R(x,88,1,HH-88,'#1c1017');
 
  // back wall
  R(22,34,156,54,'#3b2430');for(let y=41;y<88;y+=8)R(22,y,156,1,'#2c1a25');for(let y=34;y<88;y+=16)for(let x=30;x<178;x+=20)R(x,y,1,7,'#2c1a25');
@@ -416,7 +369,8 @@ function drawScene(){
  else{R(126,66,4,9,sk);R(127,74,2,9,'#8a5639');R(124,82,8,4,'#c9d2e6');R(124,85,8,1,'#6b7183');}}
  // particles + flash
  parts=parts.filter(p=>p.l-->0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.6;R(Math.round(p.x),Math.round(p.y),1,1,p.c);});
- if(flash>0){A(flash*.12,()=>R(0,0,W,H,flashCol));flash--;}
+ if(flash>0){A(flash*.12,()=>R(0,-oy,W,HH+oy,flashCol));flash--;}
+ sc.restore();
 }
 
 /* ---------- sword portrait ---------- */
@@ -457,28 +411,23 @@ function tile(c,s,y){c.fillStyle='#0a1024';c.fillRect(0,y,20,20);c.fillStyle=TIL
 function drawReel(r){if(r.spin){r.off+=10;if(r.off>=20){r.off-=20;r.cur=r.next;r.next=SYM[Math.random()*6|0];}tile(r.c,r.cur,r.off);tile(r.c,r.next,r.off-20);}else tile(r.c,r.cur,0);}
 
 /* ---------- ui ---------- */
-let undo=null,sellArm=0,resetArm=0,bannerT=0;
+let sellArm=0,resetArm=0,bannerT=0;
 function say(m,k){$('#result').textContent=m;$('#result').className='result k-'+k;S.log.unshift({m,k});S.log=S.log.slice(0,30);}
 function banner(text,k){const b=$('#banner');b.hidden=true;void b.offsetWidth;b.textContent=text;b.className='banner k-'+k;b.hidden=false;clearTimeout(bannerT);bannerT=setTimeout(()=>b.hidden=true,1500);}
 function render(){
- const L=S.level,T=look(L,S.el),c=cost(L),flux=S.arm.flux&&S.items.flux>0,ward=S.arm.ward&&S.items.ward>0;
+ const L=S.level,T=look(L,S.el),c=cost(L);
  $('#credits').textContent=fmt(S.credits);$('#lv').textContent='+'+L;$('#nm').textContent=T.n;$('#sellv').textContent=fmt(sellVal(L));
  $('#bEnh').disabled=busy||L>=MAXL||S.credits<c;
  $('#bEnhS').textContent=L>=MAXL?'최고 단계':c===0?'첫 담금질은 무료':'비용 '+fmt(c);
  $('#bSell').disabled=busy||L===0;$('#bSellT').textContent=sellArm?'정말 팔까요?':'암시장에 팔기';$('#bSellS').textContent=L===0?'+0 검은 값이 없음':'+'+fmt(sellVal(L));
- $('#bUndo').disabled=busy||!undo||S.items.glass<1;$('#bUndoS').textContent=undo?'+'+undo.level+'로 복구 · 모래 '+S.items.glass+'개':'모래 '+S.items.glass+'개 보유';
- $('#tFlux').setAttribute('aria-pressed',flux);$('#tFlux').disabled=busy||S.items.flux<1;$('#tFluxL').textContent='불꽃 촉매 넣기 ×'+S.items.flux;
- $('#tWard').setAttribute('aria-pressed',ward);$('#tWard').disabled=busy||S.items.ward<1;$('#tWardL').textContent='파괴 방지권 걸기 ×'+S.items.ward;
- const o=odds(L,flux),pc=v=>(v*100).toFixed(1)+'%';
+ const o=odds(L),pc=v=>(v*100).toFixed(1)+'%';
  $('#pG3').textContent=pc(o.great3);$('#pG2').textContent=pc(o.great2);$('#pU').textContent=pc(o.up);$('#pK').textContent=pc(o.keep);$('#pD').textContent=pc(o.down);$('#pX').textContent=pc(o.destroy);
  $('#sgG').style.width=(o.great3+o.great2)*100+'%';$('#sgU').style.width=o.up*100+'%';$('#sgK').style.width=o.keep*100+'%';$('#sgD').style.width=o.down*100+'%';$('#sgX').style.width=o.destroy*100+'%';
  $('#mG').style.width=(o.great3+o.great2)*100+'%';$('#mU').style.width=o.up*100+'%';$('#mK').style.width=o.keep*100+'%';$('#mD').style.width=o.down*100+'%';$('#mX').style.width=o.destroy*100+'%';
  const mt=$('#mTxt');mt.textContent='';[['대강화',o.great3+o.great2,'var(--gold)'],['강화',o.up,'var(--teal)'],['유지',o.keep,'var(--mute)'],['손상',o.down,'var(--crack)'],['파괴',o.destroy,'var(--danger)']].forEach(a=>{const sp=el('span',null,a[0]+' '+pc(a[1]));sp.style.color=a[2];mt.appendChild(sp);});
- $('#oddsNote').textContent='+'+L+' 검 기준 확률'+(flux?', 불꽃 촉매 적용':'')+'. 레벨이 오를수록 균열과 해골이 늘고, 해골은 +4부터 섞입니다.';
- $('#nFlux').textContent='×'+S.items.flux;$('#nWard').textContent='×'+S.items.ward;$('#nGlass').textContent='×'+S.items.glass;
+ $('#oddsNote').textContent='+'+L+' 검 기준 확률. 레벨이 오를수록 균열과 해골이 늘고, 해골은 +4부터 섞입니다.';
  document.querySelectorAll('[data-buy]').forEach(b=>{const k=b.dataset.buy;
-  if(k==='forge'){const mx=S.forge>=5,p=FORGE_COST[S.forge-1];b.textContent=mx?'완료':fmt(p);b.disabled=busy||mx||S.credits<p;}
-  else{b.textContent=fmt(PRICE[k]);b.disabled=busy||S.credits<PRICE[k];}});
+  if(k==='forge'){const mx=S.forge>=5,p=FORGE_COST[S.forge-1];b.textContent=mx?'완료':fmt(p);b.disabled=busy||mx||S.credits<p;}});
  const shopOpen=S.day%3===0,wait=3-S.day%3;
  if(!shopOpen)document.querySelectorAll('[data-buy]').forEach(b=>b.disabled=true);
  $('#shopNote').textContent=shopOpen?'상인이 오늘 대장간에 와 있습니다. 화덕을 끄면 떠납니다.':'상인은 3일마다 찾아옵니다. 지금은 살 수 없고, 다음 방문까지 '+wait+'일 남았습니다.';
@@ -491,16 +440,16 @@ function render(){
  const hs=S.hasSword,dy=S.day;
  if(!hs){$('#lv').textContent='—';$('#nm').textContent='빈 모루';$('#bEnh').disabled=true;$('#bEnhS').textContent='올릴 검이 없음';$('#bSell').disabled=true;$('#bSellS').textContent='팔 검이 없음';}
  $('#bHide').disabled=busy||!hs||L<1||S.cellar.length>=cap();
- $('#bHideS').textContent=S.cellar.length>=cap()?'무기고가 가득 참':(!hs||L<1)?'+1 이상만 보관 가능':'밤 방어력 +'+(formOf(L)+1);
+ $('#bHideS').textContent=S.cellar.length>=cap()?'무기고가 가득 참':(!hs||L<1)?'+1 이상만 가능':'밤 방어력 +'+(formOf(L)+1);
  $('#bEnd').disabled=busy;
- $('#bEndS').textContent=dy>=30?'서른 번째 밤 · 봉기':'밤으로 넘어감 · 상납 '+fmt(tribOf(dy))+(dy>=2?' · 오크 습격':'');
- $('#stDay').textContent=dy+'일째 / 30';
+ $('#bEndS').textContent=dy>=30?'서른 번째 밤 · 봉기':'상납 '+fmt(tribOf(dy))+(dy>=2?' · 오크 '+S.orc:'');
+ $('#stDay').textContent=dy+' / 30일';
  const pips=(id,n,mx,c)=>{const e=$(id);e.textContent='';for(let i=0;i<mx;i++)e.appendChild(el('i','pip'+c+(i<n?' on':'')));};
  pips('#stStock',S.stock,Math.max(supply()-1,S.stock,1),'');
- $('#stTrib').textContent=fmt(tribOf(dy))+' 크레딧';
+ $('#stTrib').textContent=fmt(tribOf(dy));
  pips('#stKid',S.kid,3,' h');
  $('#stPow').textContent=defense()+' / '+(dy>=2&&dy<30?S.orc:'없음');
- $('#celCap').textContent=S.cellar.length+' / '+cap()+'칸';
+ $('#celCap').textContent='무기고 '+S.cellar.length+'/'+cap();
  const cl=$('#cellar');cl.textContent='';S.cellar.forEach((o,i)=>{const li=el('li',null,swName(o.l,o.e));if(!hs){const b=el('button','buy','꺼내기');b.id='out'+i;b.disabled=busy;b.onclick=()=>takeOut(i);li.appendChild(b);}cl.appendChild(li);});
  $('#celNote').textContent=(S.cellar.length?'걸어 둔 검이 밤마다 오크를 막습니다. 검 한 자루의 방어력은 형상 번호(레벨÷2) +1입니다.':'아직 걸어 둔 검이 없습니다. +1 이상 검을 보관하면 밤에 오크를 막는 방어력이 됩니다.')+' 지면 크레딧을 털리고 가장 좋은 검이 부러집니다. 서른 번째 밤에는 이 검들이 왕을 향하고, 형상 번호 합이 30 이상이면 복수에 성공합니다. 모루가 비면 꺼내서 다시 강화할 수 있습니다.';
  const dx=$('#dex');dx.textContent='';ELS.forEach((E,i)=>{const li=el('li'),sw2=el('i','sw');sw2.style.background=E.m;li.append(sw2,el('b',null,E.n),el('span',null,S.dex[i]?NAMES[i][S.dex[i]-1]+'까지 만듦':'아직 만든 검 없음'),el('span','pct',S.dex[i]+' / 20'));dx.appendChild(li);});
@@ -509,9 +458,9 @@ function render(){
 
 function enhance(){
  if(busy||!S.hasSword||S.level>=MAXL)return;const c=cost(S.level);if(S.credits<c)return;
- const flux=S.arm.flux&&S.items.flux>0;S.credits-=c;if(flux)S.items.flux--;S.spins++;
- const w=weights(S.level,flux),res=[pick(w),pick(w),pick(w)];
- undo=null;sellArm=0;busy=true;forging=true;reels.forEach(r=>{r.spin=true;r.off=0;});
+ S.credits-=c;S.spins++;
+ const w=weights(S.level),res=[pick(w),pick(w),pick(w)];
+ sellArm=0;busy=true;forging=true;reels.forEach(r=>{r.spin=true;r.off=0;});
  $('#result').textContent='룬을 새기는 중…';$('#result').className='result';render();
  const good=s=>s==='flame'||s==='hammer'||s==='star';
  const tense=(good(res[0])&&good(res[1]))||(res[0]===res[1]&&(res[0]==='skull'||res[0]==='crack'));
@@ -520,7 +469,7 @@ function enhance(){
  setTimeout(()=>resolve(res),at[2]+120);
 }
 function resolve(res){
- busy=false;forging=false;S.last=res;const o=evaluate(res),before=S.level,name=look(before,S.el).n;let k=o,gone=false;const stock0=S.stock,el0=S.el;
+ busy=false;forging=false;S.last=res;const o=evaluate(res),before=S.level,name=look(before,S.el).n;let k=o;
  if(o==='great3'||o==='great2'||o==='up'){
   const d=o==='great3'?4:o==='great2'?2:1;S.level=Math.min(MAXL,before+d);S.best=Math.max(S.best,S.level);
   say((d>1?'대강화! ':'강화 성공. ')+'+'+before+' → +'+S.level+' '+look(S.level,S.el).n+(formOf(S.level)>formOf(before)?' (새 형상)':''),o);S.dex[S.el]=Math.max(S.dex[S.el],formOf(S.level));
@@ -528,26 +477,19 @@ function resolve(res){
  }else if(o==='keep'){say('룬이 어긋났습니다. +'+before+' 유지.','keep');banner('유지','keep');burst(['#8490ad'],6,false);}
  else if(o==='down'){S.level=Math.max(0,before-1);say(before>0?'균열이 번졌습니다. +'+before+' → +'+S.level:'균열이 번졌지만 더 내려갈 곳이 없습니다.','down');banner('손상 −1','down');burst(['#c46be0','#8490ad'],16,false);flash=3;flashCol='#c46be0';}
  else{
-  if(S.arm.ward&&S.items.ward>0){S.items.ward--;k='saved';say('해골이 떴지만 파괴 방지권이 +'+before+' '+name+'을 지켰습니다.','saved');banner('방지권 발동','saved');burst(['#3fc1b0','#f6e7c8'],24,true);flash=3;flashCol='#3fc1b0';}
-  else{S.broken++;gone=true;takeNext();say('+'+before+' '+name+'이 산산조각 났습니다.'+(S.hasSword?' 다음 녹슨 검을 모루에 올립니다.':' 오늘 쓸 검이 더 없습니다.'),'destroy');banner('파괴','destroy');burst(['#ece6da','#ef5350','#56627f'],50,true);flash=6;flashCol='#ef5350';}
+  {S.broken++;takeNext();say('+'+before+' '+name+'이 산산조각 났습니다.'+(S.hasSword?' 다음 녹슨 검을 모루에 올립니다.':' 오늘 쓸 검이 더 없습니다.'),'destroy');banner('파괴','destroy');burst(['#ece6da','#ef5350','#56627f'],50,true);flash=6;flashCol='#ef5350';}
  }
- if(S.level<before||gone)undo={level:before,stock:stock0,el:el0};
  SFX[k]();render();
 }
 function sell(){
  if(busy||S.level===0)return;
  if(!sellArm){sellArm=setTimeout(()=>{sellArm=0;render();},2500);render();return;}
  clearTimeout(sellArm);sellArm=0;const v=sellVal(S.level);S.credits+=v;S.sold+=v;
- say('+'+S.level+' '+look(S.level,S.el).n+'을 '+fmt(v)+' 크레딧에 팔았습니다.','sell');S.earn+=v;takeNext();undo=null;SFX.coin();render();
-}
-function rewind(){
- if(busy||!undo||S.items.glass<1)return;S.items.glass--;S.level=undo.level;S.stock=undo.stock;S.el=undo.el;S.hasSword=true;S.best=Math.max(S.best,S.level);
- say('시간의 모래가 흘러 +'+undo.level+' '+look(undo.level,undo.el).n+'이 돌아왔습니다.','saved');undo=null;banner('시간 되돌림','saved');SFX.undo();render();
+ say('+'+S.level+' '+look(S.level,S.el).n+'을 '+fmt(v)+' 크레딧에 팔았습니다.','sell');S.earn+=v;takeNext();SFX.coin();render();
 }
 function buy(k){
  if(busy||S.day%3!==0)return;
  if(k==='forge'){if(S.forge>=5)return;const p=FORGE_COST[S.forge-1];if(S.credits<p)return;S.credits-=p;S.forge++;say('대장간을 Lv.'+S.forge+'로 증축했습니다. 벽에 검 한 자루가 더 걸렸습니다.','sell');}
- else{if(S.credits<PRICE[k])return;S.credits-=PRICE[k];S.items[k]++;if(k!=='glass')S.arm[k]=true;}
  SFX.coin();render();
 }
 /* ---------- story: cellar, nights, tribute, ending ---------- */
@@ -555,10 +497,10 @@ const ov=$('#ov');
 function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 function openOv(build){ov.textContent='';const box=el('div','ovbox');build(box);ov.appendChild(box);ov.hidden=false;const b=box.querySelector('button');if(b)b.focus();}
 function closeOv(){ov.hidden=true;ov.textContent='';}
-function fresh(){S=DEF();undo=null;reels.forEach((r,i)=>r.cur=S.last[i]);$('#result').textContent=S.log[0].m;$('#result').className='result k-keep';render();intro();}
-function hide(){if(busy||!S.hasSword||S.level<1||S.cellar.length>=cap())return;const l=S.level,e=S.el;S.cellar.push({l,e});takeNext();undo=null;
+function fresh(){S=DEF();reels.forEach((r,i)=>r.cur=S.last[i]);$('#result').textContent=S.log[0].m;$('#result').className='result k-keep';render();intro();}
+function hide(){if(busy||!S.hasSword||S.level<1||S.cellar.length>=cap())return;const l=S.level,e=S.el;S.cellar.push({l,e});takeNext();
  say(swName(l,e)+'을 방어 무기고에 걸었습니다.','saved');SFX.undo();render();}
-function takeOut(i){if(busy||S.hasSword)return;const o=S.cellar.splice(i,1)[0];S.level=o.l;S.el=o.e;S.hasSword=true;undo=null;say(swName(o.l,o.e)+'을 무기고에서 꺼내 모루에 올렸습니다.','keep');render();}
+function takeOut(i){if(busy||S.hasSword)return;const o=S.cellar.splice(i,1)[0];S.level=o.l;S.el=o.e;S.hasSword=true;say(swName(o.l,o.e)+'을 무기고에서 꺼내 모루에 올렸습니다.','keep');render();}
 const LETTER=['"저는 괜찮아요. 창밖으로 대장간 쪽 하늘이 보여요."','"오늘은 빵을 하나 더 받았어요."','"밤마다 망치 소리를 떠올려요. 꼭 다시 만나요."'];
 const NIGHT={1:'빈 대장간에 망치 소리가 혼자 울렸다. 산 쪽에서 북소리가 들린다. 내일 밤부터 오크가 내려온다.',5:'이웃이 말했다. "오크는 검 없는 집부터 턴다네. 무기고를 채워 두게."',10:'아버지의 망치 자루에서 새겨진 글자를 찾았다. "낮에는 벼리고, 밤에는 지켜라."',15:'절반이 지났다. 성벽 위 횃불이 어제보다 늘었다.',20:'오크를 막아낸 소문이 퍼졌다. 이웃들이 대장간 앞에 모이기 시작했다.',25:'성에서 축제 준비가 시작됐다. 근위대가 자리를 비우는 밤이 온다.',29:'내일이 마지막 밤이다. 무기고의 검을 하나씩 닦았다.'};
 function battle(a,b){let ha=40+a*10,hb=40+b*10,t=0;const ma=ha,mb=hb,ev=[];
@@ -576,7 +518,7 @@ function endDay(){if(busy)return;clearTimeout(sellArm);sellArm=0;
    if(S.cellar.length){let bi=0;S.cellar.forEach((o,i)=>{if(o.l>S.cellar[bi].l)bi=i;});const bo=S.cellar.splice(bi,1)[0];ev.push('오크가 '+swName(bo.l,bo.e)+'을 부러뜨렸습니다.');}}}
  if(NIGHT[d])ev.push(NIGHT[d]);
  const left=S.credits,kid=S.kid;
- S.day++;S.earn=0;S.stock=supply();if(!S.hasSword)takeNext();S.orc=S.day<30?orcOf(S.day):0;undo=null;
+ S.day++;S.earn=0;S.stock=supply();if(!S.hasSword)takeNext();S.orc=S.day<30?orcOf(S.day):0;
  say(S.day+'일째 아침. 녹슨 검이 새로 들어왔습니다. 오늘 밤 상납금 '+fmt(tribOf(S.day))+' 크레딧'+(S.day>=30?'. 오늘이 서른 번째 날입니다.':', 예상 오크 전력 '+S.orc+'.')+(S.day%3===0?' 오늘은 상인이 찾아왔습니다.':''),'keep');render();
  showNight(d,earn,ev,raid,def,orcs,left,kid);}
 let raidT=0;
@@ -645,9 +587,7 @@ function intro(){let i=0,ch=0,hold=0;clearInterval(introT);
    nxL.textContent=i>=INTRO.length-1?'대장간으로':'다음';};
   tick();introT=setInterval(tick,90);});}
 
-$('#bEnh').onclick=enhance;$('#bSell').onclick=sell;$('#bUndo').onclick=rewind;
-$('#tFlux').onclick=()=>{S.arm.flux=!S.arm.flux;render();};
-$('#tWard').onclick=()=>{S.arm.ward=!S.arm.ward;render();};
+$('#bEnh').onclick=enhance;$('#bSell').onclick=sell;
 document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buy(b.dataset.buy));
 $('#mute').onclick=e=>{muted=!muted;e.currentTarget.setAttribute('aria-pressed',muted);e.currentTarget.textContent=muted?'소리 꺼짐':'소리 켜짐';};
 $('#reset').onclick=()=>{if(busy)return;if(!resetArm){resetArm=setTimeout(()=>{resetArm=0;render();},3000);render();return;}
@@ -660,7 +600,8 @@ $('#bHide').onclick=hide;$('#bEnd').onclick=endDay;$('#bIntro').onclick=intro;
 let lastT=0;
 function loop(t){if(t-lastT>85){lastT=t;if(!RM||busy||parts.length||flash>0)f++;if(forging&&f%4===2)SFX.clink();drawScene();reels.forEach(drawReel);if(f%2===0)drawSword();}requestAnimationFrame(loop);}
 $('#result').textContent=S.log[0]?S.log[0].m:'';$('#result').className='result k-'+(S.log[0]?S.log[0].k:'keep');
-render();drawScene();reels.forEach(drawReel);requestAnimationFrame(loop);
+window.addEventListener('resize',fit);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
+render();fit();drawScene();reels.forEach(drawReel);requestAnimationFrame(loop);
 if(S.ended)showEnd();else if(!S.intro)intro();
 })();
 </script>
