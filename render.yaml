@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: rune-forge
+    runtime: static
+    buildCommand: node build.js
+    staticPublishPath: ./public
