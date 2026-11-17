@@ -89,6 +89,9 @@ h2{font-size:22px;color:var(--lantern)}
 .tix{flex:0 0 auto;color:var(--mute);font-size:12px;font-weight:800;text-shadow:1px 1px 0 var(--deep)}
 .cellar{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;min-width:0}
 .cellar li{flex:0 0 auto;white-space:nowrap;background:var(--glass);border:2px solid var(--teal);padding:2px 6px;font-size:11px;display:flex;gap:6px;align-items:center}
+.cellar li{padding:0;border:0;background:none}
+.chip{background:var(--glass);border:2px solid var(--teal);color:var(--paper);padding:3px 6px;font-size:11px;font-weight:600;white-space:nowrap}
+.chip:disabled{opacity:.5}
 .nav .ghost{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* sheets and night overlays */
@@ -290,8 +293,8 @@ try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S=Object
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
 
 const cost=L=>L===0?0:Math.round((.4*L+2)*(1-.05*(S.forge-1)));
-const sellVal=L=>L===0?0:Math.round(25*Math.pow(1.35,L/2)*(1+.1*(S.forge-1)));
-const CURVE={g:[[0,.888],[10,.78],[20,.72],[30,.68],[40,.66]],c:[[0,.017],[10,.035],[20,.045],[30,.05],[40,.052]],k:[[0,0],[7,0],[8,.04],[20,.09],[30,.105],[40,.115]]};
+const sellVal=L=>L===0?0:Math.round(25*Math.pow(1.45,L/2)*(1+.1*(S.forge-1)));
+const CURVE={g:[[0,.888],[10,.78],[20,.72],[30,.68],[40,.66]],c:[[0,.017],[10,.035],[20,.045],[30,.05],[40,.052]],k:[[0,0],[5,0],[6,.05],[10,.10],[20,.141],[30,.173],[40,.195]]};
 function at(pt,L){for(let i=1;i<pt.length;i++)if(L<=pt[i][0]){const a=pt[i-1],b=pt[i];return a[1]+(b[1]-a[1])*(L-a[0])/(b[0]-a[0]);}return pt[pt.length-1][1];}
 function weights(L,flux){const g=at(CURVE.g,L),c=at(CURVE.c,L),k=at(CURVE.k,L),m=flux?1.3:1;return{flame:g*.4*m,hammer:g*.4*m,star:g*.2*m,stone:Math.max(.02,1-g-c-k),crack:c,skull:k};}
 function pick(w){let t=0;for(const s of SYM)t+=w[s];let r=Math.random()*t;for(const s of SYM){r-=w[s];if(r<0)return s;}return 'stone';}
@@ -518,7 +521,7 @@ function render(){
  $('#sgG').style.width=(o.great3+o.great2)*100+'%';$('#sgU').style.width=o.up*100+'%';$('#sgK').style.width=o.keep*100+'%';$('#sgD').style.width=o.down*100+'%';$('#sgX').style.width=o.destroy*100+'%';
  $('#mG').style.width=(o.great3+o.great2)*100+'%';$('#mU').style.width=o.up*100+'%';$('#mK').style.width=o.keep*100+'%';$('#mD').style.width=o.down*100+'%';$('#mX').style.width=o.destroy*100+'%';
  const mt=$('#mTxt');mt.textContent='';[['대강화',o.great3+o.great2,'var(--gold)'],['강화',o.up,'var(--teal)'],['유지',o.keep,'var(--mute)'],['손상',o.down,'var(--crack)'],['파괴',o.destroy,'var(--danger)']].forEach(a=>{const sp=el('span',null,a[0]+' '+pc(a[1]));sp.style.color=a[2];mt.appendChild(sp);});
- $('#oddsNote').textContent='+'+L+' 검 기준 확률. 레벨이 오를수록 균열과 해골이 늘고, 해골은 +8부터 섞입니다.';
+ $('#oddsNote').textContent='+'+L+' 검 기준 확률. 레벨이 오를수록 균열과 해골이 늘고, 해골은 +6부터 섞입니다.';
  document.querySelectorAll('[data-buy]').forEach(b=>{const k=b.dataset.buy;
   if(k==='forge'){const mx=S.forge>=5,p=FORGE_COST[S.forge-1];b.textContent=mx?'완료':fmt(p);b.disabled=busy||mx||S.credits<p;}});
  const shopOpen=S.day%3===0,wait=3-S.day%3;
@@ -546,8 +549,8 @@ function render(){
  pips('#stKid',S.kid,3,' h');
  $('#stPow').textContent=defense()+' / '+(dy>=2&&dy<30?S.orc:'없음');
  $('#celCap').textContent='무기고 '+S.cellar.length+'/'+cap();
- const cl=$('#cellar');cl.textContent='';S.cellar.forEach((o,i)=>{const li=el('li',null,swName(o.l,o.e));if(!hs){const b=el('button','buy','꺼내기');b.id='out'+i;b.disabled=busy;b.onclick=()=>takeOut(i);li.appendChild(b);}cl.appendChild(li);});
- $('#celNote').textContent=(S.cellar.length?'걸어 둔 검이 밤마다 오크를 막습니다. 검 한 자루의 방어력은 형상 번호(레벨÷2) +1입니다.':'아직 걸어 둔 검이 없습니다. +1 이상 검을 보관하면 밤에 오크를 막는 방어력이 됩니다.')+' 지면 크레딧의 20%를 털리고 가장 좋은 검이 두 형상 내려갑니다. 서른 번째 밤에는 이 검들이 왕을 향합니다. 형상 번호 합이 30 이상이면 딸을 구해 탈출하고, 70 이상이면 복수에 성공합니다. 모루가 비면 꺼내서 다시 강화할 수 있습니다.';
+ const cl=$('#cellar');cl.textContent='';S.cellar.forEach((o,i)=>{const li=el('li'),b=el('button','chip',swName(o.l,o.e));b.id='out'+i;b.disabled=busy;b.title='눌러서 모루로 꺼내기';b.onclick=()=>takeOut(i);li.appendChild(b);cl.appendChild(li);});
+ $('#celNote').textContent=(S.cellar.length?'걸어 둔 검이 밤마다 오크를 막습니다. 검 한 자루의 방어력은 형상 번호(레벨÷2) +1입니다.':'아직 걸어 둔 검이 없습니다. +1 이상 검을 보관하면 밤에 오크를 막는 방어력이 됩니다.')+' 지면 크레딧의 20%를 털리고 가장 좋은 검이 두 형상 내려갑니다. 서른 번째 밤에는 이 검들이 왕을 향합니다. 형상 번호 합이 25 이상이면 딸을 구해 탈출하고, 60 이상이면 복수에 성공합니다. 무기고의 검을 누르면 모루로 꺼내 다시 강화할 수 있고, 모루에 있던 검과 자리를 바꿉니다.';
  coach();
  drawSword();save();
 }
@@ -608,7 +611,10 @@ function closeOv(){ov.hidden=true;ov.textContent='';}
 function fresh(){S=DEF();reels.forEach((r,i)=>r.cur=S.last[i]);$('#result').textContent=S.log[0].m;$('#result').className='result k-keep';render();intro();}
 function hide(){if(busy||!S.hasSword||S.level<1||S.cellar.length>=cap())return;const l=S.level,e=S.el;S.cellar.push({l,e});takeNext();
  say(swName(l,e)+'을 방어 무기고에 걸었습니다.','saved');SFX.undo();render();}
-function takeOut(i){if(busy||S.hasSword)return;const o=S.cellar.splice(i,1)[0];S.level=o.l;S.el=o.e;S.hasSword=true;say(swName(o.l,o.e)+'을 무기고에서 꺼내 모루에 올렸습니다.','keep');render();}
+function takeOut(i){if(busy)return;const o=S.cellar[i];if(!o)return;
+ if(S.hasSword&&S.level>=1){S.cellar[i]={l:S.level,e:S.el};say(swName(o.l,o.e)+'을 꺼내고 '+swName(S.level,S.el)+'을 대신 걸었습니다.','keep');}
+ else{S.cellar.splice(i,1);const back=S.hasSword;if(back)S.stock++;say(swName(o.l,o.e)+'을 무기고에서 꺼내 모루에 올렸습니다.'+(back?' 녹슨 검은 더미로 돌려놓았습니다.':''),'keep');}
+ S.level=o.l;S.el=o.e;S.hasSword=true;clearTimeout(sellArm);sellArm=0;SFX.undo();render();}
 const LETTER=['"저는 괜찮아요. 창밖으로 대장간 쪽 하늘이 보여요."','"오늘은 빵을 하나 더 받았어요."','"밤마다 망치 소리를 떠올려요. 꼭 다시 만나요."','"탑 아래로 상인 수레가 지나가는 걸 봤어요. 대장간에도 들르나요?"','"병사들이 오크 이야기를 해요. 밤에 조심하세요."','"할아버지 망치는 잘 있나요? 저는 아직 그 소리를 기억해요."','"창살 사이로 별을 세다가 잠들어요. 서른 개까지 셌어요."','"성이 시끄러워요. 축제를 준비한대요."','"곧 볼 수 있을 것 같은 기분이 들어요. 기다릴게요."'];
 const NIGHT={1:'빈 대장간에 망치 소리가 혼자 울렸다. 산 쪽에서 북소리가 들린다. 내일 밤부터 오크가 내려온다.',5:'이웃이 말했다. "오크는 검 없는 집부터 턴다네. 무기고를 채워 두게."',10:'아버지의 망치 자루에서 새겨진 글자를 찾았다. "낮에는 벼리고, 밤에는 지켜라."',15:'절반이 지났다. 성벽 위 횃불이 어제보다 늘었다.',20:'오크를 막아낸 소문이 퍼졌다. 이웃들이 대장간 앞에 모이기 시작했다.',25:'성에서 축제 준비가 시작됐다. 근위대가 자리를 비우는 밤이 온다.',29:'내일이 마지막 밤이다. 무기고의 검을 하나씩 닦았다.'};
 function battle(a,b){let ha=40+a*10,hb=40+b*10,t=0;const ma=ha,mb=hb,ev=[];
@@ -650,9 +656,9 @@ function showNight(d,earn,ev,raid,def,orcs,left,kid){clearInterval(raidT);openOv
   hMe.style.width=e.ha*100+'%';hOp.style.width=e.hb*100+'%';logP.textContent=(e.me?'방어용 검이 오크를 벱니다':'오크가 문을 내리칩니다')+' · 피해 '+e.d;tone(e.me?520:150,.07,e.me?'square':'sawtooth',.05);};
  tick();raidT=setInterval(tick,RM?30:80);});}
 function uprising(){const p=power(),kid=S.kid>0;let t,m;
- if(p>=70&&kid){t='복수의 밤';m='밤마다 오크를 막아내던 검이 이웃들의 손에 쥐어졌다. 근위대가 무너지고 탑의 문이 열렸다. 딸은 아버지의 망치를 알아보았다. 왕의 시대는 그 밤에 끝났다.';}
- else if(p>=30&&kid){t='탈출';m='검이 모자랐다. 왕좌까지는 닿지 못했지만 탑의 문은 부술 수 있었다. 딸의 손을 잡고 도시를 떠났다. 모루는 두고 왔다. 언젠가 돌아올 것이다.';}
- else if(p>=70){t='늦은 복수';m='왕은 쓰러졌다. 하지만 탑은 비어 있었다. 상납을 거른 밤들이 떠올랐다.';}
+ if(p>=60&&kid){t='복수의 밤';m='밤마다 오크를 막아내던 검이 이웃들의 손에 쥐어졌다. 근위대가 무너지고 탑의 문이 열렸다. 딸은 아버지의 망치를 알아보았다. 왕의 시대는 그 밤에 끝났다.';}
+ else if(p>=25&&kid){t='탈출';m='검이 모자랐다. 왕좌까지는 닿지 못했지만 탑의 문은 부술 수 있었다. 딸의 손을 잡고 도시를 떠났다. 모루는 두고 왔다. 언젠가 돌아올 것이다.';}
+ else if(p>=60){t='늦은 복수';m='왕은 쓰러졌다. 하지만 탑은 비어 있었다. 상납을 거른 밤들이 떠올랐다.';}
  else{t='꺼진 화덕';m='봉기는 성문 앞에서 멈췄다. 검이 모자랐다. 대장간의 불은 그 밤 이후 다시 켜지지 않았다.';}
  S.ended={t,m,p};save();showEnd();}
 function showEnd(){const e=S.ended;openOv(box=>{box.append(el('h2',null,'서른 번째 밤 · '+e.t),el('p',null,e.m),el('p','note','검의 전력 '+e.p+' · 최고 강화 +'+S.best+' · 오크 격퇴 '+S.repel+'회'));
