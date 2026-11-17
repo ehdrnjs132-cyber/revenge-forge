@@ -70,7 +70,7 @@ h2{font-size:22px;color:var(--lantern)}
 .val{color:var(--mute);font-size:12px}
 .val b{color:var(--paper);font-variant-numeric:tabular-nums}
 .reels{display:flex;gap:8px}
-.reel{width:50px;height:50px;border:2px solid var(--deep);box-shadow:0 0 0 2px var(--wood-hi)}
+.reel{flex:1 1 0;min-width:0;max-width:92px;aspect-ratio:1;height:auto;border:2px solid var(--deep);box-shadow:0 0 0 2px var(--wood-hi)}
 .chance{display:flex;flex-direction:column;gap:4px}
 .bar{display:flex;height:10px;border:2px solid var(--deep);background:var(--deep)}
 .bar i{display:block;height:100%}
@@ -90,10 +90,41 @@ h2{font-size:22px;color:var(--lantern)}
 .cellar{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;min-width:0}
 .cellar li{flex:0 0 auto;white-space:nowrap;background:var(--glass);border:2px solid var(--teal);padding:2px 6px;font-size:11px;display:flex;gap:6px;align-items:center}
 .cellar li{padding:0;border:0;background:none}
-.chip{background:var(--glass);border:2px solid var(--teal);color:var(--paper);padding:3px 6px;font-size:11px;font-weight:600;white-space:nowrap}
+.chip{background:var(--glass);border:2px solid var(--teal);color:var(--paper);padding:2px 5px;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.chip canvas{width:22px;height:47px}
+.chip span{font-size:10px;font-weight:800}
+.cellar li.slot{width:36px;height:62px;border:2px dashed var(--panel-hi)}
 .chip:disabled{opacity:.5}
 .nav .ghost{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+.daychip{font-weight:800;font-size:13px;background:var(--glass);border:2px solid var(--deep);padding:4px 8px;white-space:nowrap}
+.cards{display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:4px}
+.card{background:var(--glass);border:2px solid var(--deep);padding:4px 6px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.cl{color:var(--mute);font-size:10px;font-weight:800;white-space:nowrap}
+.card canvas{image-rendering:pixelated;align-self:flex-start}
+#cvStock{width:100%;max-width:103px;height:auto}
+#cvKid{width:64px;height:16px;margin-block:3px}
+.cs{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv2{display:flex;flex-direction:column;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kingcap{color:#ff5a5a;font-size:24px}
+.ov.tree{display:flex;flex-direction:column;gap:8px;place-items:stretch;overflow:hidden}
+.treehead{display:flex;align-items:center;gap:8px}
+.treehead h2{margin-right:auto}
+.board{flex:1 1 0;min-height:0;overflow:auto;border:3px solid var(--deep);background:#080d1f;box-shadow:inset 0 0 0 2px var(--panel-hi)}
+.boardin{position:relative;width:1400px;height:1400px;background-image:radial-gradient(#1a2444 1px,transparent 1px);background-size:28px 28px}
+.nd{position:absolute;width:46px;height:46px;transform:translate(-50%,-50%);border:3px solid #232c47;background:#0f1833;color:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;padding:0}
+.nd b{font-family:var(--f-display);font-weight:400;font-size:17px}
+.nd small{font-size:10px;font-weight:800;color:var(--mute)}
+.nd.lock{opacity:.35}
+.nd.av{border-style:dashed;background:#16223f}
+.nd.own{background:#22325a}
+.nd.max{background:#3d3115;box-shadow:0 0 0 2px var(--gold)}
+.nd.sel{outline:3px solid var(--paper);outline-offset:2px}
+.nodeinfo{display:flex;flex-direction:column;gap:6px;background:var(--panel);border:3px solid var(--deep);padding:10px}
+.nodeinfo .btn{flex:0 0 auto}
+.ni-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ni-h strong{font-family:var(--f-display);font-weight:400;font-size:19px;color:var(--lantern)}
+.ni-h span{font-size:12px;color:var(--mute);font-weight:800}
 /* sheets and night overlays */
 .ov{position:fixed;inset:0;z-index:50;background:rgba(5,9,22,.95);display:grid;place-items:center;overflow:auto;
   padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
@@ -131,28 +162,27 @@ h2{font-size:22px;color:var(--lantern)}
 .hp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px;align-items:center;font-size:13px}
 .hpbar{height:14px;background:var(--deep);border:3px solid var(--deep);box-shadow:0 0 0 2px var(--panel-hi)}
 .hpbar i{display:block;height:100%;width:100%;background:var(--teal)}
-@media (max-height:640px){#sword{width:42px;height:90px}.reel{width:42px;height:42px}.btn{font-size:15px;padding:4px 6px}.result{min-height:1.4em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+@media (max-height:700px){#sword{width:42px;height:90px}.reel{max-width:50px}.chip canvas{width:16px;height:34px}.cellar li.slot{height:46px}.btn{font-size:15px;padding:4px 6px}.result{min-height:1.4em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 @media (prefers-reduced-motion:reduce){.banner,.hint{animation:none}}
 </style>
 
 <div class="game">
   <canvas id="scene" width="200" height="112" aria-label="밤의 대장간. 모루 위에 검이 놓여 있고 대장장이가 망치를 들고 있다."></canvas>
-  <button id="tagMer" class="tag" data-open="shShop">상인</button>
+  <button id="tagMer" class="tag" data-open="shTree">상인</button>
   <button id="tagLet" class="tag" data-open="shLetter">딸의 편지</button>
   <div class="hud">
     <div class="tophud">
       <header class="top">
         <h1>룬 대장간</h1>
+        <span class="daychip" id="stDay"></span>
         <div class="purse" title="크레딧"><span class="coin"></span><span id="credits">0</span></div>
         <button id="mute" class="ghost" aria-pressed="false">소리 켜짐</button>
       </header>
-      <dl class="status">
-        <div><dt>날짜</dt><dd id="stDay"></dd></div>
-        <div><dt>녹슨 검</dt><dd id="stStock"></dd></div>
-        <div><dt>밤 상납금</dt><dd id="stTrib"></dd></div>
-        <div><dt>딸의 안부</dt><dd id="stKid"></dd></div>
-        <div><dt>방어/오크</dt><dd id="stPow"></dd></div>
-      </dl>
+      <div class="cards">
+        <div class="card"><span class="cl">오늘 강화할 검</span><canvas id="cvStock" width="56" height="12" aria-hidden="true"></canvas><span class="cs" id="stStockT"></span></div>
+        <div class="card"><span class="cl">딸의 목숨</span><canvas id="cvKid" width="32" height="8" aria-hidden="true"></canvas><span class="cs" id="stKidT"></span></div>
+        <div class="card" id="cardNight"><span class="cl">오늘 밤</span><div class="cv2" id="stNight"></div></div>
+      </div>
     </div>
     <div class="artgap"><div id="banner" class="banner" hidden></div><div class="coach" id="coach" hidden><p id="coachT"></p><button id="coachX" class="ghost">안내 끄기</button></div></div>
     <div class="deckui">
@@ -168,11 +198,11 @@ h2{font-size:22px;color:var(--lantern)}
           </div>
         </div>
       </div>
-      <div class="chance"><div class="bar" aria-hidden="true"><i id="mG" style="background:var(--gold)"></i><i id="mU" style="background:var(--teal)"></i><i id="mK" style="background:var(--slate)"></i><i id="mD" style="background:var(--crack)"></i><i id="mX" style="background:var(--danger)"></i></div><p class="chance-t" id="mTxt" aria-label="이번 강화 확률"></p></div>
+      <div class="chance"><div class="bar" aria-hidden="true"><i id="mG" style="background:var(--gold)"></i><i id="mU" style="background:var(--teal)"></i><i id="mK" style="background:var(--slate)"></i><i id="mX" style="background:var(--danger)"></i></div><p class="chance-t" id="mTxt" aria-label="이번 강화 확률"></p></div>
       <p id="result" class="result" aria-live="polite"></p>
       <div class="row">
         <button id="bEnh" class="btn big"><span>강화하기</span><small id="bEnhS"></small></button>
-        <button id="bEnd" class="btn end"><span>화덕 끄기</span><small id="bEndS"></small></button>
+        <button id="bEnd" class="btn end"><span>다음 날로</span><small id="bEndS"></small></button>
       </div>
       <div class="row">
         <button id="bSell" class="btn sell"><span id="bSellT">암시장에 팔기</span><small id="bSellS"></small></button>
@@ -181,6 +211,7 @@ h2{font-size:22px;color:var(--lantern)}
       <div class="rack"><span class="tix" id="celCap"></span><ul class="cellar" id="cellar"></ul></div>
       <div class="row nav">
         <button class="ghost" data-open="shOdds">룬 조합표</button>
+        <button class="ghost" data-open="shTree">스킬 트리</button>
         <button class="ghost" data-open="shLog">도감·일지</button>
       </div>
     </div>
@@ -190,27 +221,23 @@ h2{font-size:22px;color:var(--lantern)}
 <div class="ov" id="shOdds" hidden><div class="ovbox">
   <section class="panel">
     <h2>룬 조합표</h2>
-    <div class="bar" aria-hidden="true"><i id="sgG" style="background:var(--gold)"></i><i id="sgU" style="background:var(--teal)"></i><i id="sgK" style="background:var(--slate)"></i><i id="sgD" style="background:var(--crack)"></i><i id="sgX" style="background:var(--danger)"></i></div>
+    <div class="bar" aria-hidden="true"><i id="sgG" style="background:var(--gold)"></i><i id="sgU" style="background:var(--teal)"></i><i id="sgK" style="background:var(--slate)"></i><i id="sgX" style="background:var(--danger)"></i></div>
     <ul class="odds">
       <li><i class="sw" style="background:var(--gold)"></i><span class="combo"><canvas class="mini" data-spr="star" width="12" height="12"></canvas><canvas class="mini" data-spr="star" width="12" height="12"></canvas><canvas class="mini" data-spr="star" width="12" height="12"></canvas></span><span><b>대강화 +4</b> 별 셋</span><span class="pct" id="pG3"></span></li>
       <li><i class="sw" style="background:var(--gold)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="flame" width="12" height="12"></canvas></span><span><b>대강화 +2</b> 불꽃 셋 또는 망치 셋</span><span class="pct" id="pG2"></span></li>
       <li><i class="sw" style="background:var(--teal)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="hammer" width="12" height="12"></canvas><canvas class="mini" data-spr="star" width="12" height="12"></canvas></span><span><b>강화 +1</b> 길조(불꽃·망치·별)만 셋</span><span class="pct" id="pU"></span></li>
       <li><i class="sw" style="background:var(--slate)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="stone" width="12" height="12"></canvas><canvas class="mini" data-spr="hammer" width="12" height="12"></canvas></span><span><b>유지</b> 그 밖의 조합</span><span class="pct" id="pK"></span></li>
-      <li><i class="sw" style="background:var(--crack)"></i><span class="combo"><canvas class="mini" data-spr="flame" width="12" height="12"></canvas><canvas class="mini" data-spr="crack" width="12" height="12"></canvas><canvas class="mini" data-spr="hammer" width="12" height="12"></canvas></span><span><b>손상 −1</b> 균열이 하나라도 뜸</span><span class="pct" id="pD"></span></li>
       <li><i class="sw" style="background:var(--danger)"></i><span class="combo"><canvas class="mini" data-spr="skull" width="12" height="12"></canvas><canvas class="mini" data-spr="skull" width="12" height="12"></canvas><canvas class="mini" data-spr="stone" width="12" height="12"></canvas></span><span><b>파괴</b> 해골 둘 이상</span><span class="pct" id="pX"></span></li>
     </ul>
     <p class="note" id="oddsNote"></p>
   </section>
   <button class="btn end" data-close><span>닫기</span></button></div></div>
-<div class="ov" id="shShop" hidden><div class="ovbox">
-  <section class="panel">
-    <h2>떠돌이 상인</h2>
-    <p class="note" id="shopNote"></p>
-    <ul class="shop">
-      <li><canvas class="ico" data-spr="hammer" width="12" height="12"></canvas><div><strong id="forgeT">대장간 증축</strong><span id="forgeD"></span></div><button class="buy" data-buy="forge"></button></li>
-    </ul>
-  </section>
-  <button class="btn end" data-close><span>닫기</span></button></div></div>
+<div class="ov tree" id="shTree" hidden>
+  <div class="treehead"><h2>스킬 트리</h2><div class="purse"><span class="coin"></span><span id="trCr">0</span></div><button class="ghost" data-close>닫기</button></div>
+  <p class="note" id="shopNote"></p>
+  <div class="board" id="board"><div class="boardin" id="boardin"></div></div>
+  <div class="nodeinfo" id="nodeinfo"></div>
+</div>
 <div class="ov" id="shLog" hidden><div class="ovbox">
   <section class="panel">
     <h2>검 도감</h2>
@@ -243,8 +270,8 @@ h2{font-size:22px;color:var(--lantern)}
 (()=>{
 const $=s=>document.querySelector(s);
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const MAXL=40, KEY='rune-forge-v5';
-const SYM=['flame','hammer','star','stone','crack','skull'];
+const MAXL=40, KEY='rune-forge-v6';
+const SYM=['flame','hammer','star','stone','skull'];
 const fmt=n=>Math.round(n).toLocaleString('ko-KR');
 
 /* ---------- sprites (12x12) ---------- */
@@ -276,31 +303,52 @@ const mix=(a,b,t)=>{const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16),
 const formOf=l=>Math.min(20,Math.floor(l/2));
 function look(l,e){const k=formOf(l),E=ELS[e];if(!k)return{f:0,n:E.n+' 기운의 녹슨 검',b:'#8d7b6a',h:'#b09a86',g:'#6b5a4a',glow:null};
  const t=(k-1)/19,b=t<.5?mix(E.d,E.m,.55+t*.9):mix(E.m,E.h,(t-.5)*1.5);return{f:k,n:NAMES[e][k-1],b,h:mix(b,'#ffffff',.5),g:E.g,glow:k>=4?E.glow:null};}
-const FORGE_COST=[800,2500,6000,12000];
-const DEF=()=>({credits:300,level:0,forge:1,best:0,sold:0,spins:0,broken:0,log:[{m:'1일째 아침. 병사들이 녹슨 검 3자루를 던져놓고 갔습니다. 밤마다 징수관이 상납금을 걷으러 옵니다.',k:'keep'}],last:['flame','hammer','stone'],
+const BR=[
+ {c:'#ffd23d',g:'운',trunk:['succ',.03,2,'손에 익은 망치'],twigs:[['pity',.04,3,'오기'],['star',.2,2,'별자리 읽기'],['pity',.04,3,'집념'],['succ',.06,1,'행운의 편자'],['great',1,1,'번뜩임',2]]},
+ {c:'#3fc1b0',g:'수',trunk:['skull',.04,2,'액막이 부적'],twigs:[['shield',.05,2,'정령의 가호'],['salvage',.15,2,'파편 줍기'],['shield',.05,2,'단단한 심지'],['salvage',.15,2,'고철 장수'],['shield',.05,2,'두 번째 숨']]},
+ {c:'#ffe08a',g:'상',trunk:['sell',.04,2,'흥정 솜씨'],twigs:[['loot',.25,2,'전리품 감정'],['interest',.01,2,'쌈짓돈'],['discount',.05,2,'단골 대접'],['loot',.25,2,'오크 금니'],['interest',.01,2,'비밀 장부']]},
+ {c:'#9fb0d0',g:'절',trunk:['cost',.05,2,'숯 아끼기'],twigs:[['trib',.04,2,'징수관 구워삶기'],['trib',.04,2,'장부 고치기'],['discount',.05,2,'외상 장부'],['trib',.04,2,'뒷문 거래'],['trib',.04,2,'가짜 인장']]},
+ {c:'#7fd4ff',g:'방',trunk:['def',.06,2,'날 세우기'],twigs:[['rack',1,1,'벽걸이 하나 더'],['orc',.05,2,'가시 울타리'],['rack',1,1,'천장 걸이'],['orc',.05,2,'횃불 망루'],['rack',1,1,'비밀 선반',1.5]]},
+ {c:'#d0a548',g:'보',trunk:[['start',1,2,'좋은 쇠 고르기 1'],['supply',1,1,'병사 매수'],['start',1,2,'좋은 쇠 고르기 2'],['start',1,2,'좋은 쇠 고르기 3'],['supply',1,1,'고철상 친구'],['start',1,2,'좋은 쇠 고르기 4'],['supply',1,1,'밀수 수레']],twigs:[['heal',1,1,'몰래 보낸 빵',4],['interest',.01,2,'저금통'],['loot',.25,2,'약탈품 창고'],['heal',1,1,'매수한 간수',4],['discount',.05,2,'도매상']]},
+ {c:'#b79bff',g:'별',trunk:['star',.15,2,'별빛 담금질'],twigs:[['succ',.03,2,'밤샘 연습'],['great',1,1,'겹쳐 치기',2],['succ',.03,2,'새벽 망치질'],['pity',.04,3,'별똥별'],['great',1,1,'천둥 치기',2.5]]},
+ {c:'#ff7a2f',g:'속',trunk:['sell',.03,2,'속성 감정'],twigs:[['el0',.06,3,'불의 숙련'],['el1',.06,3,'대지의 숙련'],['el2',.06,3,'얼음의 숙련'],['el3',.06,3,'번개의 숙련'],['star',.2,2,'룬 각인']]}];
+const NODES=[{id:'root',t:'root',v:0,m:1,n:'대장간의 불씨',x:700,y:700,p:null,c:'#ffb347',g:'불',cost:0}];
+BR.forEach((b,bi)=>{const a=bi*Math.PI/4-Math.PI/2,ux=Math.cos(a),uy=Math.sin(a),arr=Array.isArray(b.trunk[0]);let prev='root';
+ for(let d=1;d<=7;d++){const sp=arr?b.trunk[d-1]:b.trunk,id='b'+bi+'t'+d,r=80+d*74;
+  NODES.push({id,t:sp[0],v:sp[1],m:sp[2],n:sp[3]+(arr?'':' '+d),x:Math.round(700+ux*r),y:Math.round(700+uy*r),p:prev,c:b.c,g:b.g,cost:Math.round(50*Math.pow(1.4,d))});
+  if(d>=2&&d<=6){const w=b.twigs[d-2],side=d%2?1:-1,rr=r+26;NODES.push({id:id+'w',t:w[0],v:w[1],m:w[2],n:w[3],x:Math.round(700+ux*rr-uy*side*70),y:Math.round(700+uy*rr+ux*side*70),p:id,c:b.c,g:b.g,cost:Math.round(60*Math.pow(1.4,d)*(w[4]||1))});}
+  prev=id;}});
+[[0,1,'succ',.1,'거인의 망치','운'],[3,4,'shield',.15,'불멸의 모루','수'],[5,6,'interest',.03,'왕의 금고 열쇠','상']].forEach((q,i)=>{const a=(q[0]+.5)*Math.PI/4-Math.PI/2;
+ NODES.push({id:'key'+i,t:q[2],v:q[3],m:1,n:q[4],x:Math.round(700+Math.cos(a)*640),y:Math.round(700+Math.sin(a)*640),p:'b'+q[0]+'t7',ps:['b'+q[0]+'t7','b'+q[1]+'t7'],c:'#ffd23d',g:q[5],cost:2500});});
+const NB={};NODES.forEach(n=>NB[n.id]=n);
+let KC={};
+function K(t){return KC[t]||0;}
+function reK(){KC={};for(const n of NODES){const l=S.sk[n.id]||0;if(l)KC[n.t]=(KC[n.t]||0)+n.v*l;}}
+const DEF=()=>({credits:300,level:0,sk:{root:1},used:0,best:0,sold:0,spins:0,broken:0,log:[{m:'1일째 아침. 병사들이 녹슨 검 3자루를 던져놓고 갔습니다. 밤마다 징수관이 상납금을 걷으러 옵니다.',k:'keep'}],last:['flame','hammer','stone'],
  day:1,stock:2,hasSword:true,el:Math.random()*4|0,dex:[0,0,0,0],letters:[],unread:false,tutOff:false,kid:3,cellar:[],earn:0,orc:0,repel:0,intro:false,ended:null});
-const supply=()=>Math.max(2,3+Math.floor((S.forge-1)/2));
-const cap=()=>2+S.forge;
+const supply=()=>3+K('supply');
+const cap=()=>3+K('rack');
 const reqOf=d=>Math.min(10,2+Math.floor(d/3));
 const power=()=>S.cellar.reduce((a,b)=>a+formOf(b.l),0)+(S.hasSword?formOf(S.level):0);
 const swName=(l,e)=>'+'+l+' '+look(l,e).n;
-const tribOf=d=>Math.round(30*Math.pow(1.10,d-1));
-const defense=()=>S.cellar.reduce((a,b)=>a+formOf(b.l)+1,0);
-const orcOf=d=>d<2?0:Math.round(d*.8+Math.random()*d*.3);
-function takeNext(){if(S.stock>0){S.stock--;S.hasSword=true;}else S.hasSword=false;S.level=0;S.el=Math.random()*4|0;}
+const tribOf=d=>Math.round(30*Math.pow(1.10,d-1)*(1-Math.min(.6,K('trib'))));
+const defense=()=>Math.round(S.cellar.reduce((a,b)=>a+formOf(b.l)+1,0)*(1+K('def')));
+const orcOf=d=>d<2?0:Math.round((d*.8+Math.random()*d*.3)*(1-Math.min(.5,K('orc'))));
+function takeNext(){if(S.stock>0){S.stock--;S.hasSword=true;}else S.hasSword=false;S.level=S.hasSword?K('start'):0;S.el=Math.random()*4|0;pity=0;S.used=(S.used||0)+1;}
 let S=DEF();
-try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S=Object.assign(DEF(),o);if(!Array.isArray(S.cellar))S.cellar=[];if(!Array.isArray(S.dex))S.dex=[0,0,0,0];if(!Array.isArray(S.letters))S.letters=[];}}catch(e){}
+try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S=Object.assign(DEF(),o);if(!Array.isArray(S.cellar))S.cellar=[];if(!Array.isArray(S.dex))S.dex=[0,0,0,0];if(!Array.isArray(S.letters))S.letters=[];if(!S.sk)S.sk={root:1};}}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
+reK();
 
-const cost=L=>L===0?0:Math.round((.4*L+2)*(1-.05*(S.forge-1)));
-const sellVal=L=>L===0?0:Math.round(25*Math.pow(1.45,L/2)*(1+.1*(S.forge-1)));
-const CURVE={g:[[0,.888],[10,.78],[20,.72],[30,.68],[40,.66]],c:[[0,.017],[10,.035],[20,.045],[30,.05],[40,.052]],k:[[0,0],[5,0],[6,.05],[10,.10],[20,.141],[30,.173],[40,.195]]};
+const cost=L=>L===0?0:Math.round((.4*L+2)*(1-Math.min(.8,K('cost'))));
+const sellVal=L=>L===0?0:Math.round(25*Math.pow(1.45,L/2)*(1+K('sell')));
+const CURVE={g:[[0,.888],[10,.78],[20,.72],[30,.68],[40,.66]],c:[[0,.017],[10,.035],[20,.045],[30,.05],[40,.052]],k:[[0,0],[3,0],[4,.06],[10,.13],[20,.183],[30,.224],[40,.25]]};
 function at(pt,L){for(let i=1;i<pt.length;i++)if(L<=pt[i][0]){const a=pt[i-1],b=pt[i];return a[1]+(b[1]-a[1])*(L-a[0])/(b[0]-a[0]);}return pt[pt.length-1][1];}
-function weights(L,flux){const g=at(CURVE.g,L),c=at(CURVE.c,L),k=at(CURVE.k,L),m=flux?1.3:1;return{flame:g*.4*m,hammer:g*.4*m,star:g*.2*m,stone:Math.max(.02,1-g-c-k),crack:c,skull:k};}
+let pity=0;
+function weights(L){const g=at(CURVE.g,L),k=at(CURVE.k,L)*(1-Math.min(.8,K('skull'))),m=1+K('succ')+K('el'+S.el)+pity*K('pity');return{flame:g*.4*m,hammer:g*.4*m,star:g*.2*m*(1+K('star')),stone:Math.max(.02,1-g-k),skull:k};}
 function pick(w){let t=0;for(const s of SYM)t+=w[s];let r=Math.random()*t;for(const s of SYM){r-=w[s];if(r<0)return s;}return 'stone';}
 function evaluate(r){const n={};r.forEach(s=>n[s]=(n[s]||0)+1);
  if((n.skull||0)>=2)return'destroy';
- if(n.crack)return'down';
  if(n.star===3)return'great3';
  if(n.flame===3||n.hammer===3)return'great2';
  if((n.flame||0)+(n.hammer||0)+(n.star||0)===3)return'up';
@@ -504,7 +552,7 @@ function buildDex(all){const g=$('#dexGrid');g.textContent='';ELS.forEach((E,e)=
 const TILE={flame:'#3d2a1c',hammer:'#2e3345',star:'#40351a',stone:'#232a3c',crack:'#2d1a3a',skull:'#3a171c'};
 const reels=[...document.querySelectorAll('.reel')].map((cv,i)=>({c:cv.getContext('2d'),cur:S.last[i],next:'stone',spin:false,off:0}));
 function tile(c,s,y){c.fillStyle='#0a1024';c.fillRect(0,y,20,20);c.fillStyle=TILE[s];c.fillRect(1,y+1,18,18);c.fillStyle='rgba(255,255,255,.08)';c.fillRect(1,y+1,18,1);spr(c,s,4,y+4);}
-function drawReel(r){if(r.spin){r.off+=10;if(r.off>=20){r.off-=20;r.cur=r.next;r.next=SYM[Math.random()*6|0];}tile(r.c,r.cur,r.off);tile(r.c,r.next,r.off-20);}else tile(r.c,r.cur,0);}
+function drawReel(r){if(r.spin){r.off+=10;if(r.off>=20){r.off-=20;r.cur=r.next;r.next=SYM[Math.random()*SYM.length|0];}tile(r.c,r.cur,r.off);tile(r.c,r.next,r.off-20);}else tile(r.c,r.cur,0);}
 
 /* ---------- ui ---------- */
 let sellArm=0,resetArm=0,bannerT=0;
@@ -517,22 +565,17 @@ function render(){
  $('#bEnhS').textContent=L>=MAXL?'최고 단계':c===0?'첫 담금질은 무료':'비용 '+fmt(c);
  $('#bSell').disabled=busy||L===0;$('#bSellT').textContent=sellArm?'정말 팔까요?':'암시장에 팔기';$('#bSellS').textContent=L===0?'+0 검은 값이 없음':'+'+fmt(sellVal(L));
  const o=odds(L),pc=v=>(v*100).toFixed(1)+'%';
- $('#pG3').textContent=pc(o.great3);$('#pG2').textContent=pc(o.great2);$('#pU').textContent=pc(o.up);$('#pK').textContent=pc(o.keep);$('#pD').textContent=pc(o.down);$('#pX').textContent=pc(o.destroy);
- $('#sgG').style.width=(o.great3+o.great2)*100+'%';$('#sgU').style.width=o.up*100+'%';$('#sgK').style.width=o.keep*100+'%';$('#sgD').style.width=o.down*100+'%';$('#sgX').style.width=o.destroy*100+'%';
- $('#mG').style.width=(o.great3+o.great2)*100+'%';$('#mU').style.width=o.up*100+'%';$('#mK').style.width=o.keep*100+'%';$('#mD').style.width=o.down*100+'%';$('#mX').style.width=o.destroy*100+'%';
- const mt=$('#mTxt');mt.textContent='';[['대강화',o.great3+o.great2,'var(--gold)'],['강화',o.up,'var(--teal)'],['유지',o.keep,'var(--mute)'],['손상',o.down,'var(--crack)'],['파괴',o.destroy,'var(--danger)']].forEach(a=>{const sp=el('span',null,a[0]+' '+pc(a[1]));sp.style.color=a[2];mt.appendChild(sp);});
- $('#oddsNote').textContent='+'+L+' 검 기준 확률. 레벨이 오를수록 균열과 해골이 늘고, 해골은 +6부터 섞입니다.';
- document.querySelectorAll('[data-buy]').forEach(b=>{const k=b.dataset.buy;
-  if(k==='forge'){const mx=S.forge>=5,p=FORGE_COST[S.forge-1];b.textContent=mx?'완료':fmt(p);b.disabled=busy||mx||S.credits<p;}});
+ $('#pG3').textContent=pc(o.great3);$('#pG2').textContent=pc(o.great2);$('#pU').textContent=pc(o.up);$('#pK').textContent=pc(o.keep);$('#pX').textContent=pc(o.destroy);
+ $('#sgG').style.width=(o.great3+o.great2)*100+'%';$('#sgU').style.width=o.up*100+'%';$('#sgK').style.width=o.keep*100+'%';$('#sgX').style.width=o.destroy*100+'%';
+ $('#mG').style.width=(o.great3+o.great2)*100+'%';$('#mU').style.width=o.up*100+'%';$('#mK').style.width=o.keep*100+'%';$('#mX').style.width=o.destroy*100+'%';
+ const mt=$('#mTxt');mt.textContent='';[['대강화',o.great3+o.great2,'var(--gold)'],['강화',o.up,'var(--teal)'],['유지',o.keep,'var(--mute)'],['파괴',o.destroy,'var(--danger)']].forEach(a=>{const sp=el('span',null,a[0]+' '+pc(a[1]));sp.style.color=a[2];mt.appendChild(sp);});
+ $('#oddsNote').textContent='+'+L+' 검 기준 확률. 레벨이 오를수록 해골이 늘고, +4부터 섞입니다. 스킬 트리에서 확률을 바꿀 수 있습니다.';
  const shopOpen=S.day%3===0,wait=3-S.day%3;
- if(!shopOpen)document.querySelectorAll('[data-buy]').forEach(b=>b.disabled=true);
- $('#shopNote').textContent=shopOpen?'상인이 오늘 대장간에 와 있습니다. 화덕을 끄면 떠납니다.':'상인은 3일마다 찾아옵니다. 지금은 살 수 없고, 다음 방문까지 '+wait+'일 남았습니다.';
+ $('#shopNote').textContent=shopOpen?'상인이 오늘 대장간에 와 있습니다. 크레딧으로 스킬을 배울 수 있고, 다음 날로 넘어가면 떠납니다.':'상인은 3일마다 찾아옵니다. 지금은 둘러보기만 할 수 있고, 다음 방문까지 '+wait+'일 남았습니다.';
  const tm=$('#tagMer');tm.textContent=shopOpen?'상인 방문 중':'상인 '+wait+'일 뒤';tm.className='tag'+(shopOpen?' on':'');
  const tl=$('#tagLet');tl.textContent=S.unread?'새 편지':'딸의 편지';tl.className='tag'+(S.unread?' on':'');
  const lu=$('#letters');lu.textContent='';if(!S.letters.length)lu.appendChild(el('li',null,'아직 편지가 오지 않았습니다. 멀리 탑의 창에 불빛만 보입니다.'));
  S.letters.forEach(x=>lu.appendChild(el('li','k-saved',x.d+'일째 밤 · '+x.t)));
- $('#forgeT').textContent='대장간 증축 Lv.'+S.forge;
- $('#forgeD').textContent=S.forge>=5?'강화 비용 −20%, 판매가 +40%. 더 올릴 수 없습니다.':'다음 단계: 강화 비용 −'+S.forge*5+'%, 판매가 +'+S.forge*10+'%, 무기고 +1칸'+(S.forge%2===0?', 하루 배달 +1자루':'');
  $('#sBest').textContent='+'+S.best;$('#sSold').textContent=fmt(S.sold);$('#sSpins').textContent=fmt(S.spins);$('#sBroken').textContent=fmt(S.broken);
  const ul=$('#log');ul.textContent='';S.log.slice(0,7).forEach(e=>{const li=document.createElement('li');li.className='k-'+e.k;li.textContent=e.m;ul.appendChild(li);});
  $('#reset').textContent=resetArm?'정말 초기화할까요? 한 번 더 누르면 지워집니다':'처음부터 다시';
@@ -542,31 +585,66 @@ function render(){
  $('#bHideS').textContent=S.cellar.length>=cap()?'무기고가 가득 참':(!hs||L<1)?'+1 이상만 가능':'밤 방어력 +'+(formOf(L)+1);
  $('#bEnd').disabled=busy;
  $('#bEndS').textContent=dy>=30?'서른 번째 밤 · 봉기':'상납 '+fmt(tribOf(dy))+(dy>=2?' · 오크 '+S.orc:'');
- $('#stDay').textContent=dy+' / 30일';
- const pips=(id,n,mx,c)=>{const e=$(id);e.textContent='';for(let i=0;i<mx;i++)e.appendChild(el('i','pip'+c+(i<n?' on':'')));};
- pips('#stStock',S.stock,Math.max(supply()-1,S.stock,1),'');
- $('#stTrib').textContent=fmt(tribOf(dy));
- pips('#stKid',S.kid,3,' h');
- $('#stPow').textContent=defense()+' / '+(dy>=2&&dy<30?S.orc:'없음');
+ $('#stDay').textContent=dy+'일째 / 30';
+ const left=S.stock+(hs?1:0),used=S.used||0,c1=$('#cvStock').getContext('2d');c1.clearRect(0,0,56,12);
+ for(let i=0;i<Math.min(8,used+left);i++){const x=i*7,st=i<used?0:i===used&&hs?2:1;if(st===2){c1.globalAlpha=.3;c1.fillStyle='#ffd23d';c1.fillRect(x,0,6,12);c1.globalAlpha=1;}
+  c1.fillStyle=['#3a4666','#cfd6e6','#ffd23d'][st];c1.fillRect(x+2,0,2,8);c1.fillRect(x,8,6,1);c1.fillRect(x+2,9,2,3);}
+ $('#stStockT').textContent=left?'남은 검 '+left+'자루':'다 씀 → 다음 날로';
+ const hk=$('#cvKid').getContext('2d'),HP=['.XX.XX.','XXXXXXX','XXXXXXX','.XXXXX.','..XXX..','...X...'];hk.clearRect(0,0,32,8);
+ for(let i=0;i<3;i++){hk.fillStyle=i<S.kid?'#ef5350':'#4a2a35';HP.forEach((row,y)=>{for(let x=0;x<7;x++)if(row[x]==='X')hk.fillRect(i*11+x+1,y+1,1,1);});}
+ $('#stKidT').textContent=S.kid===3?'상납 못 내면 −1':S.kid?'남은 기회 '+S.kid+'번':'소식이 끊김';
+ const due=tribOf(dy),dfn=defense(),sn=$('#stNight');sn.textContent='';
+ const l1=el('span',null,'상납 '+fmt(due)+(S.credits<due?' (부족)':''));if(S.credits<due)l1.style.color='var(--danger)';
+ const l2=el('span',null,dy>=2&&dy<30?'오크 '+S.orc+' · 방어 '+dfn:'오크 없음');if(dy>=2&&dy<30&&dfn<S.orc)l2.style.color='var(--danger)';sn.append(l1,l2);
  $('#celCap').textContent='무기고 '+S.cellar.length+'/'+cap();
- const cl=$('#cellar');cl.textContent='';S.cellar.forEach((o,i)=>{const li=el('li'),b=el('button','chip',swName(o.l,o.e));b.id='out'+i;b.disabled=busy;b.title='눌러서 모루로 꺼내기';b.onclick=()=>takeOut(i);li.appendChild(b);cl.appendChild(li);});
+ const cl=$('#cellar');cl.textContent='';S.cellar.forEach((o,i)=>{const li=el('li'),b=el('button','chip'),cv=el('canvas');cv.width=28;cv.height=60;paintSword(cv.getContext('2d'),formOf(o.l),o.e,0,false);b.append(cv,el('span',null,'+'+o.l));b.id='out'+i;b.disabled=busy;b.title=swName(o.l,o.e)+' · 누르면 모루의 검과 교체';b.setAttribute('aria-label',b.title);b.onclick=()=>takeOut(i);li.appendChild(b);cl.appendChild(li);});
+ for(let i=S.cellar.length;i<cap();i++)cl.appendChild(el('li','slot'));
  $('#celNote').textContent=(S.cellar.length?'걸어 둔 검이 밤마다 오크를 막습니다. 검 한 자루의 방어력은 형상 번호(레벨÷2) +1입니다.':'아직 걸어 둔 검이 없습니다. +1 이상 검을 보관하면 밤에 오크를 막는 방어력이 됩니다.')+' 지면 크레딧의 20%를 털리고 가장 좋은 검이 두 형상 내려갑니다. 서른 번째 밤에는 이 검들이 왕을 향합니다. 형상 번호 합이 25 이상이면 딸을 구해 탈출하고, 60 이상이면 복수에 성공합니다. 무기고의 검을 누르면 모루로 꺼내 다시 강화할 수 있고, 모루에 있던 검과 자리를 바꿉니다.';
- coach();
+ coach();if(trBuilt&&!$('#shTree').hidden)refreshTree();
  drawSword();save();
 }
 
+let trSel='root',trBuilt=false;
+const pc0=v=>Math.round(v*100)+'%';
+const skCost=n=>Math.round(n.cost*((S.sk[n.id]||0)+1)*(1-Math.min(.5,K('discount'))));
+function skDesc(n){const v=n.v,t=n.t;return t==='root'?'모든 가지가 여기서 뻗어 나갑니다. 상인이 오는 날(3일마다) 크레딧으로 스킬을 배울 수 있습니다.':
+ t==='succ'?'길조 룬이 레벨당 '+pc0(v)+' 더 자주 나옵니다.':t==='pity'?'유지가 뜨면 다음 강화에서 길조 룬이 레벨당 '+pc0(v)+' 더 나옵니다. 세 번까지 쌓입니다.':
+ t==='star'?'별 룬이 레벨당 '+pc0(v)+' 더 자주 나옵니다.':t==='great'?'대강화가 한 레벨 더 오릅니다.':t==='skull'?'해골 룬이 레벨당 '+pc0(v)+' 덜 나옵니다.':
+ t==='shield'?'파괴가 떠도 레벨당 '+pc0(v)+' 확률로 검이 살아남습니다.':t==='salvage'?'부서진 검 값을 레벨당 '+pc0(v)+' 돌려받습니다.':
+ t==='sell'?'판매가가 레벨당 '+pc0(v)+' 오릅니다.':t==='interest'?'매일 아침 가진 크레딧의 '+pc0(v)+'(레벨당)를 이자로 받습니다. 하루 최대 150.':t==='loot'?'오크 전리품이 레벨당 '+pc0(v)+' 늘어납니다.':
+ t==='discount'?'스킬 값이 레벨당 '+pc0(v)+' 싸집니다.':t==='cost'?'강화 비용이 레벨당 '+pc0(v)+' 줄어듭니다.':t==='trib'?'상납금이 레벨당 '+pc0(v)+' 줄어듭니다.':
+ t==='def'?'방어력이 레벨당 '+pc0(v)+' 오릅니다.':t==='rack'?'무기고가 한 칸 늘어납니다.':t==='orc'?'오크 전력이 레벨당 '+pc0(v)+' 줄어듭니다.':
+ t==='supply'?'하루에 받는 녹슨 검이 한 자루 늘어납니다.':t==='start'?'녹슨 검이 레벨당 +1 높은 상태로 옵니다.':t==='heal'?'딸의 목숨을 하나 되찾습니다. 세 칸까지만 찹니다.':
+ ELS[+t.slice(2)].n+' 속성 검을 강화할 때 길조 룬이 레벨당 '+pc0(v)+' 더 나옵니다.';}
+function buildTree(){const bi=$('#boardin');bi.textContent='';const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('width',1400);svg.setAttribute('height',1400);svg.style.cssText='position:absolute;left:0;top:0';
+ NODES.forEach(n=>{(n.ps||[n.p]).forEach(pid=>{if(!pid)return;const q=NB[pid],l=document.createElementNS(ns,'line');l.setAttribute('x1',q.x);l.setAttribute('y1',q.y);l.setAttribute('x2',n.x);l.setAttribute('y2',n.y);l.setAttribute('stroke-width',3);l.id='ln-'+n.id+'-'+pid;svg.appendChild(l);});});
+ bi.appendChild(svg);
+ NODES.forEach(n=>{const b=el('button','nd');b.id='nd-'+n.id;b.style.left=n.x+'px';b.style.top=n.y+'px';b.append(el('b',null,n.g),el('small'));b.setAttribute('aria-label',n.n);b.onclick=()=>{trSel=n.id;refreshTree();};bi.appendChild(b);});
+ trBuilt=true;}
+function refreshTree(){if(!trBuilt)return;const open=S.day%3===0;$('#trCr').textContent=fmt(S.credits);
+ NODES.forEach(n=>{const l=S.sk[n.id]||0,av=!n.p||(S.sk[n.p]||0)>0,b=$('#nd-'+n.id);
+  b.className='nd'+(l>=n.m?' max':l?' own':av?' av':' lock')+(trSel===n.id?' sel':'');b.style.borderColor=l||av?n.c:'';b.lastChild.textContent=n.id==='root'?'':l+'/'+n.m;
+  (n.ps||[n.p]).forEach(pid=>{if(pid)$('#ln-'+n.id+'-'+pid).setAttribute('stroke',l?n.c:av?'#56627f':'#232c47');});});
+ const n=NB[trSel],l=S.sk[n.id]||0,av=!n.p||(S.sk[n.p]||0)>0,box=$('#nodeinfo'),c=skCost(n);box.textContent='';
+ const why=n.id==='root'?'시작점':l>=n.m?'최대 레벨':!av?'앞의 스킬을 먼저 배워야 합니다':!open?'상인이 오는 날에만 배울 수 있습니다':S.credits<c?'크레딧이 모자랍니다':'';
+ const head=el('div','ni-h');head.append(el('strong',null,n.n),el('span',null,n.id==='root'?'':'레벨 '+l+' / '+n.m));
+ const bt=el('button','btn');bt.id='skBuy';bt.append(el('span',null,why||'배우기'),el('small',null,n.id==='root'||l>=n.m?'':fmt(c)+' 크레딧'));bt.disabled=!!why;bt.onclick=()=>buySkill(n.id);
+ box.append(head,el('p','note',skDesc(n)),bt);}
+function buySkill(id){const n=NB[id],l=S.sk[id]||0,c=skCost(n);if(S.day%3!==0||l>=n.m||(n.p&&!(S.sk[n.p]>0))||S.credits<c)return;
+ S.credits-=c;S.sk[id]=l+1;if(n.t==='heal')S.kid=Math.min(3,S.kid+1);reK();SFX.coin();say('스킬 "'+n.n+'"을 배웠습니다. '+skDesc(n),'sell');render();}
+function openTree(){if(!trBuilt)buildTree();refreshTree();const b=$('#board');b.scrollLeft=700-b.clientWidth/2;b.scrollTop=700-b.clientHeight/2;}
 function coach(){const c=$('#coach');document.querySelectorAll('.hint').forEach(x=>x.classList.remove('hint'));
  if(S.tutOff||S.day>3||S.ended){c.hidden=true;return;}
  let t,tg;const d=S.day;
  if(d===1){
   if(!S.spins){t='① 강화하기를 눌러 녹슨 검에 룬을 새겨 보세요. 룬 아래 색 막대가 이번 강화의 확률입니다.';tg='#bEnh';}
-  else if(!S.cellar.length&&S.hasSword&&S.level<2){t='② 조금 더 강화해 보세요. 균열이 하나라도 뜨면 한 단계 내려가고, 해골이 둘 뜨면 부서집니다.';tg='#bEnh';}
+  else if(!S.cellar.length&&S.hasSword&&S.level<2){t='② 조금 더 강화해 보세요. 하루에 받은 검은 모두 강화할 수 있습니다. 해골이 둘 뜨면 검이 부서집니다.';tg='#bEnh';}
   else if(!S.cellar.length&&S.hasSword){t='③ 내일 밤부터 오크가 옵니다. 이 검을 방어용 보관으로 무기고에 걸어 두세요.';tg='#bHide';}
   else if(S.cellar.length&&!S.sold&&S.hasSword){const lo=S.level<2;t=lo?'④ 다음 검도 강화해 보세요. 높일수록 비싸게 팔리지만 부서질 위험도 커집니다.':'④ 이번 검은 암시장에 팔아 보세요. 밤마다 내는 상납금이 여기서 나옵니다.';tg=lo?'#bEnh':'#bSell';}
-  else{t='⑤ 오늘 할 일이 끝나면 화덕 끄기를 누르세요. 밤에 징수관이 상납금을 걷어 갑니다.';tg='#bEnd';}
- }else if(d===2){t='위쪽 방어/오크 칸을 보세요. 왼쪽이 내 방어력, 오른쪽이 오늘 밤 오크 전력입니다. 방어력이 더 높아야 안전합니다.';tg='#stPow';}
- else{t='3일마다 상인이 옵니다. 그림 속 상인 꼬리표를 누르면 대장간을 증축할 수 있습니다. 선반의 편지도 눌러 보세요.';tg='#tagMer';}
- $('#coachT').textContent=t;c.hidden=false;const e=$(tg);if(e)(tg==='#stPow'?e.parentElement:e).classList.add('hint');}
+  else{t='⑤ 위쪽 "오늘 강화할 검"이 다 어두워지면 다음 날로를 누르세요. 밤에 징수관이 상납금을 걷어 갑니다.';tg='#bEnd';}
+ }else if(d===2){t='위쪽 "오늘 밤" 칸을 보세요. 내야 할 상납금과 오크 전력, 내 방어력이 나옵니다. 모자라면 빨갛게 표시됩니다.';tg='#cardNight';}
+ else{t='3일마다 상인이 옵니다. 그림 속 상인 꼬리표를 누르면 스킬 트리에서 능력을 배울 수 있습니다. 선반의 편지도 눌러 보세요.';tg='#tagMer';}
+ $('#coachT').textContent=t;c.hidden=false;const e=$(tg);if(e)e.classList.add('hint');}
 function enhance(){
  if(busy||!S.hasSword||S.level>=MAXL)return;const c=cost(S.level);if(S.credits<c)return;
  S.credits-=c;S.spins++;
@@ -582,13 +660,13 @@ function enhance(){
 function resolve(res){
  busy=false;forging=false;S.last=res;const o=evaluate(res),before=S.level,name=look(before,S.el).n;let k=o;
  if(o==='great3'||o==='great2'||o==='up'){
-  const d=o==='great3'?4:o==='great2'?2:1;S.level=Math.min(MAXL,before+d);S.best=Math.max(S.best,S.level);
+  const d=o==='great3'?4+K('great'):o==='great2'?2+K('great'):1;pity=0;S.level=Math.min(MAXL,before+d);S.best=Math.max(S.best,S.level);
   say((d>1?'대강화! ':'강화 성공. ')+'+'+before+' → +'+S.level+' '+look(S.level,S.el).n+(formOf(S.level)>formOf(before)?' (새 형상)':''),o);S.dex[S.el]=Math.max(S.dex[S.el],formOf(S.level));
   banner(d>1?'대강화 +'+d:'강화 성공',o);burst(['#ffd23d','#ffb347','#fff3c4'],d>1?46:22,true);flash=d>1?5:3;flashCol='#ffd23d';
- }else if(o==='keep'){say('룬이 어긋났습니다. +'+before+' 유지.','keep');banner('유지','keep');burst(['#8490ad'],6,false);}
- else if(o==='down'){S.level=Math.max(0,before-1);say(before>0?'균열이 번졌습니다. +'+before+' → +'+S.level:'균열이 번졌지만 더 내려갈 곳이 없습니다.','down');banner('손상 −1','down');burst(['#c46be0','#8490ad'],16,false);flash=3;flashCol='#c46be0';}
+ }else if(o==='keep'){pity=Math.min(3,pity+1);say('룬이 어긋났습니다. +'+before+' 유지.','keep');banner('유지','keep');burst(['#8490ad'],6,false);}
  else{
-  {S.broken++;takeNext();say('+'+before+' '+name+'이 산산조각 났습니다.'+(S.hasSword?' 다음 녹슨 검을 모루에 올립니다.':' 오늘 쓸 검이 더 없습니다.'),'destroy');banner('파괴','destroy');burst(['#ece6da','#ef5350','#56627f'],50,true);flash=6;flashCol='#ef5350';}
+  if(Math.random()<Math.min(.6,K('shield'))){k='saved';pity=0;say('해골이 떴지만 정령의 가호로 +'+before+' '+name+'이 살아남았습니다.','saved');banner('가호 발동','saved');burst(['#3fc1b0','#f6e7c8'],24,true);flash=3;flashCol='#3fc1b0';}
+  else{const back=Math.round(sellVal(before)*Math.min(.9,K('salvage')));S.credits+=back;S.broken++;takeNext();say('+'+before+' '+name+'이 산산조각 났습니다.'+(back?' 파편 값 '+fmt(back)+' 크레딧을 건졌습니다.':'')+(S.hasSword?' 다음 녹슨 검을 모루에 올립니다.':' 오늘 쓸 검이 더 없습니다.'),'destroy');banner('파괴','destroy');burst(['#ece6da','#ef5350','#56627f'],50,true);flash=6;flashCol='#ef5350';}
  }
  SFX[k]();render();
 }
@@ -597,11 +675,6 @@ function sell(){
  if(!sellArm){sellArm=setTimeout(()=>{sellArm=0;render();},2500);render();return;}
  clearTimeout(sellArm);sellArm=0;const v=sellVal(S.level);S.credits+=v;S.sold+=v;
  say('+'+S.level+' '+look(S.level,S.el).n+'을 '+fmt(v)+' 크레딧에 팔았습니다.','sell');S.earn+=v;takeNext();SFX.coin();render();
-}
-function buy(k){
- if(busy||S.day%3!==0)return;
- if(k==='forge'){if(S.forge>=5)return;const p=FORGE_COST[S.forge-1];if(S.credits<p)return;S.credits-=p;S.forge++;say('대장간을 Lv.'+S.forge+'로 증축했습니다.','sell');}
- SFX.coin();render();
 }
 /* ---------- story: cellar, nights, tribute, ending ---------- */
 const ov=$('#ov');
@@ -620,25 +693,46 @@ const NIGHT={1:'빈 대장간에 망치 소리가 혼자 울렸다. 산 쪽에�
 function battle(a,b){let ha=40+a*10,hb=40+b*10,t=0;const ma=ha,mb=hb,ev=[];
  while(ha>0&&hb>0&&ev.length<120){const me=t%2===0,pw=me?a:b,d=Math.round((6+pw*2)*(.6+Math.random()*.8));if(me)hb=Math.max(0,hb-d);else ha=Math.max(0,ha-d);ev.push({me,d,ha:ha/ma,hb:hb/mb});t++;}
  return{win:hb<=0,ev};}
+// The king, shown each time a life is lost: n = lives lost so far (1..3).
+function drawKing(t,n){const z=1+Math.min(.5,t*.006),sh=t<14?(t%2?1:-1):0;
+ sc.save();R(0,0,W,H,'#070205');sc.translate(100+sh,60);sc.scale(z,z);sc.translate(-100,-60);
+ [8,40,152,184].forEach(x=>{R(x,0,8,112,'#160810');R(x,0,1,112,'#24101c');});
+ R(70,6,60,106,'#1c0a14');R(66,2,68,6,'#5a4320');[72,84,98,112,124].forEach((x,i)=>R(x,i%2?-4:-8,3,i%2?6:10,'#5a4320'));
+ poly('#2a0a12',[44,112,58,72,84,58,116,58,142,72,156,112]);poly('#3d101c',[58,72,84,58,116,58,142,72,132,78,100,66,68,78]);
+ R(84,56,32,6,'#d9cdb0');for(let x=86;x<116;x+=5)R(x,58,2,2,'#1b1320');
+ R(88,34,24,24,'#0d0508');R(86,40,2,12,'#0d0508');R(112,40,2,12,'#0d0508');R(92,56,16,4,'#0d0508');
+ R(86,28,28,6,'#c9a24a');R(86,28,28,1,'#ffe08a');[86,93,99,105,111].forEach((x,i)=>R(x,i%2?24:20,3,i%2?4:8,'#c9a24a'));R(99,30,3,3,'#ef2a2a');R(89,30,2,2,'#ef2a2a');R(109,30,2,2,'#ef2a2a');
+ const e=.65+.35*Math.sin(t*.5);A(.25*e,()=>{R(88,40,11,8,'#ff2a2a');R(101,40,11,8,'#ff2a2a');});A(e,()=>{R(91,43,6,2,'#ff3b3b');R(103,43,6,2,'#ff3b3b');});R(93,43,2,2,'#fff0f0');R(105,43,2,2,'#fff0f0');
+ R(50,84,14,6,'#0d0508');R(136,84,14,6,'#0d0508');R(46,90,22,4,'#3a2a14');R(132,90,22,4,'#3a2a14');
+ sc.restore();
+ A(.16+.1*Math.sin(t*.3),()=>R(0,0,W,H,'#7a0010'));
+ if(t<3)A(.8,()=>R(0,0,W,H,'#ffffff'));
+ for(let i=0;i<3;i++){R(86+i*10,101,8,8,'#12050b');R(87+i*10,102,6,6,i<3-n?'#ffb347':'#2a0a12');}}
+function kingScene(n,then){let t=0,ch=0;const txt=['상납을 안 하다니. 딸의 목숨은 신경도 안 쓰나 보군.','마지막 기회다.','약속은 끝났다.'][Math.min(2,n-1)];clearInterval(raidT);
+ openOv(box=>{const cv=el('canvas');cv.width=200;cv.height=112;const cx=cv.getContext('2d'),capP=el('p','cap kingcap'),b=el('button','btn end');capP.setAttribute('aria-live','polite');b.append(el('span',null,'고개를 숙인다'));box.append(cv,capP,b);
+  b.onclick=()=>{clearInterval(raidT);then();};
+  const tick=()=>{t++;paint(cx,()=>drawKing(t,n));if(t>10&&ch<txt.length){ch+=RM?txt.length:1;capP.textContent=txt.slice(0,ch);if(ch%2)tone(70,.08,'sawtooth',.05);}};
+  tone(55,2.6,'sawtooth',.06,0,40);tone(41,3,'square',.04,.2);
+  tick();raidT=setInterval(tick,RM?40:90);});}
 function endDay(){if(busy)return;clearTimeout(sellArm);sellArm=0;
  if(S.day>=30)return uprising();
- const d=S.day,ev=[],due=tribOf(d),earn=S.earn,def=defense(),orcs=S.orc;let raid=null;
+ const d=S.day,ev=[],due=tribOf(d),earn=S.earn,def=defense(),orcs=S.orc;let raid=null,lostLife=0;
  if(S.credits>=due){S.credits-=due;ev.push('징수관에게 상납금 '+fmt(due)+' 크레딧을 냈습니다.');if(d%3===0){S.letters.unshift({d,t:LETTER[(d/3-1)%LETTER.length]});S.unread=true;ev.push('딸의 편지가 책상 위에 놓였습니다.');}}
- else{const got=S.credits;S.credits=0;S.kid=Math.max(0,S.kid-1);ev.push('상납금 '+fmt(due)+' 크레딧 중 '+fmt(got)+'밖에 내지 못했습니다. 징수관이 얼굴을 굳혔습니다.',S.kid>0?'딸의 안부가 나빠졌습니다.':'성에서 소식이 완전히 끊겼습니다.');}
+ else{const got=S.credits;S.credits=0;if(S.kid>0){S.kid--;lostLife=3-S.kid;}ev.push('상납금 '+fmt(due)+' 크레딧 중 '+fmt(got)+'밖에 내지 못했습니다. 징수관이 얼굴을 굳혔습니다.',S.kid>0?'딸의 목숨이 하나 줄었습니다.':'성에서 소식이 완전히 끊겼습니다.');}
  if(d>=2){raid=battle(def,orcs);
-  if(raid.win){const loot=20+orcs*12;S.credits+=loot;S.repel++;ev.push('오크 무리(전력 '+orcs+')를 막아냈습니다. 전리품 '+fmt(loot)+' 크레딧.');
+  if(raid.win){const loot=Math.round((20+orcs*12)*(1+K('loot')));S.credits+=loot;S.repel++;ev.push('오크 무리(전력 '+orcs+')를 막아냈습니다. 전리품 '+fmt(loot)+' 크레딧.');
    if(S.cellar.length&&Math.random()<.35){const i=Math.random()*S.cellar.length|0;const o=S.cellar[i];if(o.l>2){ev.push('싸우다가 '+swName(o.l,o.e)+'의 이가 빠져 한 형상 내려갔습니다.');o.l-=2;}}}
   else{const lost=Math.round(S.credits*.2);S.credits-=lost;ev.push('오크 무리(전력 '+orcs+')에게 방어선이 뚫렸습니다. '+fmt(lost)+' 크레딧을 털렸습니다.');
    if(S.cellar.length){let bi=0;S.cellar.forEach((o,i)=>{if(o.l>S.cellar[bi].l)bi=i;});const bo=S.cellar[bi],was=swName(bo.l,bo.e);bo.l-=4;if(bo.l<2){S.cellar.splice(bi,1);ev.push('오크가 '+was+'을 부러뜨렸습니다.');}else ev.push('오크가 '+was+'의 날을 꺾었습니다. 두 형상 내려갔습니다.');}}}
  if(NIGHT[d])ev.push(NIGHT[d]);
  const left=S.credits,kid=S.kid;
- S.day++;S.earn=0;S.stock=supply();if(!S.hasSword)takeNext();S.orc=S.day<30?orcOf(S.day):0;
+ S.day++;S.earn=Math.min(150,Math.floor(S.credits*K('interest')));S.credits+=S.earn;S.stock=supply();if(!S.hasSword)takeNext();S.used=0;S.orc=S.day<30?orcOf(S.day):0;
  say(S.day+'일째 아침. 녹슨 검이 새로 들어왔습니다. 오늘 밤 상납금 '+fmt(tribOf(S.day))+' 크레딧'+(S.day>=30?'. 오늘이 서른 번째 날입니다.':', 예상 오크 전력 '+S.orc+'.')+(S.day%3===0?' 오늘은 상인이 찾아왔습니다.':''),'keep');render();
- showNight(d,earn,ev,raid,def,orcs,left,kid);}
+ if(lostLife)kingScene(lostLife,()=>showNight(d,earn,ev,raid,def,orcs,left,kid));else showNight(d,earn,ev,raid,def,orcs,left,kid);}
 let raidT=0;
 function showNight(d,earn,ev,raid,def,orcs,left,kid){clearInterval(raidT);openOv(box=>{
  box.append(el('h2',null,d+'일째 밤'));
- const fin=()=>{const ul=el('ul','ovlist');['오늘 번 크레딧 '+fmt(earn),...ev,'남은 크레딧 '+fmt(left)+' · 딸의 안부 '+kid+'/3 · 서른 번째 밤까지 '+(30-d)+'일'].forEach(t=>ul.append(el('li',null,t)));
+ const fin=()=>{const ul=el('ul','ovlist');['오늘 번 크레딧 '+fmt(earn),...ev,'남은 크레딧 '+fmt(left)+' · 딸의 목숨 '+kid+'/3 · 서른 번째 밤까지 '+(30-d)+'일'].forEach(t=>ul.append(el('li',null,t)));
   const b=el('button','btn');b.append(el('span',null,'다음 날 아침'));b.onclick=()=>{clearInterval(raidT);closeOv();tone(660,.14,'triangle',.05);};box.append(ul,b);b.focus();};
  if(!raid)return fin();
  const cv=el('canvas');cv.width=200;cv.height=112;const cx=cv.getContext('2d');box.append(cv);
@@ -702,11 +796,10 @@ function intro(){let i=0,ch=0,hold=0;clearInterval(introT);
   tick();introT=setInterval(tick,90);});}
 
 $('#bEnh').onclick=enhance;$('#bSell').onclick=sell;
-document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buy(b.dataset.buy));
 $('#mute').onclick=e=>{muted=!muted;e.currentTarget.setAttribute('aria-pressed',muted);e.currentTarget.textContent=muted?'소리 꺼짐':'소리 켜짐';};
 $('#reset').onclick=()=>{if(busy)return;if(!resetArm){resetArm=setTimeout(()=>{resetArm=0;render();},3000);render();return;}
  clearTimeout(resetArm);resetArm=0;fresh();};
-document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{$('#'+b.dataset.open).hidden=false;if(b.dataset.open==='shLetter'&&S.unread){S.unread=false;render();}if(b.dataset.open==='shLog')buildDex(false);});
+document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{$('#'+b.dataset.open).hidden=false;if(b.dataset.open==='shLetter'&&S.unread){S.unread=false;render();}if(b.dataset.open==='shLog')buildDex(false);if(b.dataset.open==='shTree')openTree();});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{b.closest('.ov').hidden=true;});
 $('#coachX').onclick=()=>{S.tutOff=true;render();};$('#dexAll').onclick=()=>buildDex(true);
 $('#bHide').onclick=hide;$('#bEnd').onclick=endDay;$('#bIntro').onclick=intro;
