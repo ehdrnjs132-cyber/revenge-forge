@@ -55,7 +55,14 @@ h2{font-size:22px;color:var(--lantern)}
 
 .deckui{display:flex;flex-direction:column;gap:6px}
 .swrow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;background:var(--glass);border:2px solid var(--deep);padding:6px}
-#sword{width:44px;height:97px}
+#sword{width:56px;height:120px;background:radial-gradient(circle at 50% 45%,#2c3d6e,#0f1833);border:2px solid var(--deep)}
+.dexh{font-weight:800;font-size:13px}
+.dexrow{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px}
+.dexrow canvas{width:100%;height:auto;background:#0f1833}
+.coach{position:absolute;left:0;right:0;top:0;pointer-events:auto;background:rgba(7,13,30,.93);border:2px solid var(--lantern);padding:6px 8px;display:flex;gap:8px;align-items:center}
+.coach p{margin:0;font-size:12px;font-weight:600;flex:1 1 0;min-width:0}
+.hint{outline:3px solid var(--gold);outline-offset:2px;animation:hint 1s steps(2) infinite}
+@keyframes hint{50%{outline-color:transparent}}
 .swinfo{display:flex;flex-direction:column;gap:3px;min-width:0}
 .lvrow{display:flex;align-items:baseline;gap:8px;min-width:0}
 .lv{font-family:var(--f-num);font-size:19px;color:var(--gold);flex:0 0 auto}
@@ -121,8 +128,8 @@ h2{font-size:22px;color:var(--lantern)}
 .hp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px;align-items:center;font-size:13px}
 .hpbar{height:14px;background:var(--deep);border:3px solid var(--deep);box-shadow:0 0 0 2px var(--panel-hi)}
 .hpbar i{display:block;height:100%;width:100%;background:var(--teal)}
-@media (max-height:640px){#sword{width:36px;height:79px}.reel{width:42px;height:42px}.btn{font-size:15px;padding:4px 6px}.result{min-height:1.4em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
-@media (prefers-reduced-motion:reduce){.banner{animation:none}}
+@media (max-height:640px){#sword{width:42px;height:90px}.reel{width:42px;height:42px}.btn{font-size:15px;padding:4px 6px}.result{min-height:1.4em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+@media (prefers-reduced-motion:reduce){.banner,.hint{animation:none}}
 </style>
 
 <div class="game">
@@ -144,10 +151,10 @@ h2{font-size:22px;color:var(--lantern)}
         <div><dt>방어/오크</dt><dd id="stPow"></dd></div>
       </dl>
     </div>
-    <div class="artgap"><div id="banner" class="banner" hidden></div></div>
+    <div class="artgap"><div id="banner" class="banner" hidden></div><div class="coach" id="coach" hidden><p id="coachT"></p><button id="coachX" class="ghost">안내 끄기</button></div></div>
     <div class="deckui">
       <div class="swrow">
-        <canvas id="sword" width="40" height="88" aria-hidden="true"></canvas>
+        <canvas id="sword" width="28" height="60" aria-hidden="true"></canvas>
         <div class="swinfo">
           <div class="lvrow"><span class="lv" id="lv">+0</span><span class="nm" id="nm">녹슨 검</span></div>
           <div class="val">지금 팔면 <b id="sellv">0</b> 크레딧</div>
@@ -204,7 +211,8 @@ h2{font-size:22px;color:var(--lantern)}
 <div class="ov" id="shLog" hidden><div class="ovbox">
   <section class="panel">
     <h2>검 도감</h2>
-    <ul class="odds" id="dex"></ul>
+    <div id="dexGrid" style="display:flex;flex-direction:column;gap:6px"></div>
+    <button id="dexAll" class="ghost">전체 디자인 미리보기</button>
     <p class="note" id="celNote"></p>
   </section>
   <section class="panel">
@@ -264,16 +272,16 @@ const NAMES=[
 const mix=(a,b,t)=>{const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16),c=i=>{const x=pa>>i&255,y=pb>>i&255;return Math.round(x+(y-x)*t);};return'#'+((1<<24)|c(16)<<16|c(8)<<8|c(0)).toString(16).slice(1);};
 const formOf=l=>Math.min(20,Math.floor(l/2));
 function look(l,e){const k=formOf(l),E=ELS[e];if(!k)return{f:0,n:E.n+' 기운의 녹슨 검',b:'#8d7b6a',h:'#b09a86',g:'#6b5a4a',glow:null};
- const t=(k-1)/19,b=t<.5?mix(E.d,E.m,t*2):mix(E.m,E.h,(t-.5)*2);return{f:k,n:NAMES[e][k-1],b,h:mix(b,'#ffffff',.5),g:E.g,glow:k>=4?E.glow:null};}
-const FORGE_COST=[800,3000,12000,45000];
+ const t=(k-1)/19,b=t<.5?mix(E.d,E.m,.55+t*.9):mix(E.m,E.h,(t-.5)*1.5);return{f:k,n:NAMES[e][k-1],b,h:mix(b,'#ffffff',.5),g:E.g,glow:k>=4?E.glow:null};}
+const FORGE_COST=[800,2500,6000,12000];
 const DEF=()=>({credits:300,level:0,forge:1,best:0,sold:0,spins:0,broken:0,log:[{m:'1일째 아침. 병사들이 녹슨 검 3자루를 던져놓고 갔습니다. 밤마다 징수관이 상납금을 걷으러 옵니다.',k:'keep'}],last:['flame','hammer','stone'],
- day:1,stock:2,hasSword:true,el:Math.random()*4|0,dex:[0,0,0,0],letters:[],unread:false,kid:3,cellar:[],earn:0,orc:0,repel:0,intro:false,ended:null});
+ day:1,stock:2,hasSword:true,el:Math.random()*4|0,dex:[0,0,0,0],letters:[],unread:false,tutOff:false,kid:3,cellar:[],earn:0,orc:0,repel:0,intro:false,ended:null});
 const supply=()=>Math.max(2,3+Math.floor((S.forge-1)/2));
 const cap=()=>2+S.forge;
 const reqOf=d=>Math.min(10,2+Math.floor(d/3));
 const power=()=>S.cellar.reduce((a,b)=>a+formOf(b.l),0)+(S.hasSword?formOf(S.level):0);
 const swName=(l,e)=>'+'+l+' '+look(l,e).n;
-const tribOf=d=>Math.round(30*Math.pow(1.17,d-1));
+const tribOf=d=>Math.round(30*Math.pow(1.10,d-1));
 const defense=()=>S.cellar.reduce((a,b)=>a+formOf(b.l)+1,0);
 const orcOf=d=>d<2?0:Math.round(d*.8+Math.random()*d*.3);
 function takeNext(){if(S.stock>0){S.stock--;S.hasSword=true;}else S.hasSword=false;S.level=0;S.el=Math.random()*4|0;}
@@ -281,9 +289,9 @@ let S=DEF();
 try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S=Object.assign(DEF(),o);if(!Array.isArray(S.cellar))S.cellar=[];if(!Array.isArray(S.dex))S.dex=[0,0,0,0];if(!Array.isArray(S.letters))S.letters=[];}}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
 
-const cost=L=>L===0?0:Math.round(6*Math.pow(1.25,L/2)*(1-.05*(S.forge-1)));
-const sellVal=L=>L===0?0:Math.round(25*Math.pow(1.6,L/2)*(1+.1*(S.forge-1)));
-const CURVE={g:[[0,.888],[10,.705],[20,.531],[30,.412],[40,.3]],c:[[0,.017],[10,.042],[20,.053],[30,.064],[40,.074]],k:[[0,0],[3,0],[4,.04],[10,.148],[20,.232],[30,.298],[40,.365]]};
+const cost=L=>L===0?0:Math.round((.4*L+2)*(1-.05*(S.forge-1)));
+const sellVal=L=>L===0?0:Math.round(25*Math.pow(1.35,L/2)*(1+.1*(S.forge-1)));
+const CURVE={g:[[0,.888],[10,.78],[20,.72],[30,.68],[40,.66]],c:[[0,.017],[10,.035],[20,.045],[30,.05],[40,.052]],k:[[0,0],[7,0],[8,.04],[20,.09],[30,.105],[40,.115]]};
 function at(pt,L){for(let i=1;i<pt.length;i++)if(L<=pt[i][0]){const a=pt[i-1],b=pt[i];return a[1]+(b[1]-a[1])*(L-a[0])/(b[0]-a[0]);}return pt[pt.length-1][1];}
 function weights(L,flux){const g=at(CURVE.g,L),c=at(CURVE.c,L),k=at(CURVE.k,L),m=flux?1.3:1;return{flame:g*.4*m,hammer:g*.4*m,star:g*.2*m,stone:Math.max(.02,1-g-c-k),crack:c,skull:k};}
 function pick(w){let t=0;for(const s of SYM)t+=w[s];let r=Math.random()*t;for(const s of SYM){r-=w[s];if(r<0)return s;}return 'stone';}
@@ -395,11 +403,11 @@ function drawScene(){
  R(94,87,14,9,'#5a3628');R(94,87,14,1,'#8a5639');R(107,87,1,9,'#3f2a22');
  poly('#9aa5c4',[88,80,114,80,118,76,92,76]);R(88,80,26,5,'#4a5166');poly('#333949',[114,80,118,76,118,81,114,85]);poly('#6b7490',[88,80,92,76,83,77,80,80]);R(80,80,8,2,'#4a5166');R(95,85,12,2,'#363c4f');
  // the sword on the anvil, lying at an angle with a lit and a shaded facet
- if(SO.sword&&S.hasSword){const T=look(S.level,S.el),len=15+T.f*.7,P=(a,c)=>[90+.94*a+.3*c,79-.3*a+.94*c];
+ if(SO.sword&&S.hasSword){const T=look(S.level,S.el),spx=T.f?SP[T.f]:[16,2],len=8+spx[0]*.55,wd=1+spx[1]*.4,P=(a,c)=>[90+.94*a+.3*c,79-.3*a+.94*c];
   if(T.glow)A(.2+.08*(f%4<2),()=>poly(T.glow,[...P(3,-3.5),...P(len+7,-3.5),...P(len+7,3.5),...P(3,3.5)]));
   poly('#5a3628',[...P(-6,-.8),...P(0,-.8),...P(0,.8),...P(-6,.8)]);poly(T.g,[...P(-8,-1.2),...P(-6,-1.2),...P(-6,1.2),...P(-8,1.2)]);
   poly(T.g,[...P(0,-3),...P(2,-3),...P(2,3),...P(0,3)]);
-  poly(T.h,[...P(2,-1.7),...P(len,-1.7),...P(len+4,0),...P(2,0)]);poly(T.b,[...P(2,0),...P(len+4,0),...P(len,1.7),...P(2,1.7)]);}
+  poly(T.h,[...P(2,-wd),...P(len,-wd),...P(len+4,0),...P(2,0)]);poly(T.b,[...P(2,0),...P(len+4,0),...P(len,wd),...P(2,wd)]);}
  // smith
  const sk='#e2a878';if(SO.smith){A(.3,()=>R(124,96,24,3,'#000000'));sc.translate(-2,9);
  R(131,84,5,4,'#241619');R(139,84,5,4,'#241619');R(132,78,4,6,'#33405c');R(139,78,4,6,'#33405c');
@@ -419,36 +427,75 @@ function drawScene(){
 
 /* ---------- sword portrait ---------- */
 const sw=$('#sword').getContext('2d');
-function drawSword(){
- sw.clearRect(0,0,40,88);if(!S.hasSword)return;const r=(x,y,w,h,c)=>{sw.fillStyle=c;sw.fillRect(x,y,w,h);};
- const T=look(S.level,S.el),k=T.f,e=S.el,len=24+Math.floor(k*1.6),top=62-len,w=k>=15?10:k>=8?8:6,x0=20-w/2,gl=T.glow||T.h;
- if(T.glow){sw.globalAlpha=.1+.008*k+.06*(f%4<2);r(x0-4,top-5,w+8,len+7,T.glow);sw.globalAlpha=.08;r(x0-8,top-2,w+16,len+2,T.glow);sw.globalAlpha=1;}
- const hw=w/2,lit=mix(T.b,'#ffffff',.4),drk=mix(T.b,'#000000',.38);
- sw.globalAlpha=.4;r(x0+3,top+3,w,len+1,'#000000');sw.globalAlpha=1;
- r(x0,top,hw,len,lit);r(x0+hw,top,hw,len,drk);r(x0+hw-1,top,1,len,T.h);r(x0,top,1,len,mix(T.b,'#ffffff',.78));r(x0+w-1,top,1,len,mix(T.b,'#000000',.6));
- for(let i=1;i*2<w;i++){const ww=w-i*2;r(x0+i,top-i,ww/2,1,lit);r(x0+i+ww/2,top-i,ww/2,1,drk);}
- if(k>=3)r(19,top+3,2,len-5,k>=12?'#ffffff':gl);
- if(!k){r(x0+1,top+6,2,2,'#6a4a35');r(x0+3,top+15,2,3,'#6a4a35');r(x0,top+22,2,2,'#6a4a35');}
- // element motifs grow with the form
- if(k>=6)for(let y=top+3,i=0;y<58;y+=5,i++){
-  if(e===0){const d=(i+f)%2;r(x0-1-d,y,1+d,2,gl);r(x0+w,y+2,1+d,2,gl);}
-  else if(e===1){r(x0-1,y,1,3,T.g);r(x0+w,y+2,1,3,i%2?'#6fa04a':T.g);}
-  else if(e===2){r(x0-2,y+1,2,1,T.h);r(x0+w,y+3,2,1,T.h);}
-  else r(19+(i%2?1:-1),y,2,2,gl);}
- if(k>=10){
-  if(e===0)r(19,top-5-(f%2),2,2,gl);
-  if(e===1){r(x0-2,54,2,6,'#6fa04a');r(x0+w,50,2,4,'#6fa04a');}
-  if(e===2){r(x0-3,57,2,5,T.h);r(x0+w+1,57,2,5,T.h);}
-  if(e===3&&f%3===0){r(x0-3,top+((f*7)%len),1,1,'#ffffff');r(x0+w+2,top+((f*11)%len),1,1,'#ffffff');}}
- if(k>=18){r(19,top-7,2,3,T.h);r(17,top-5,1,2,gl);r(22,top-5,1,2,gl);}
- if(k>=20)for(let i=0;i<4;i++){const a=f*.25+i*1.57;r(Math.round(20+15*Math.cos(a)),Math.round(top+len/2+26*Math.sin(a)),1,1,'#ffffff');}
- const gw=14+2*Math.floor(k/4),gx=20-gw/2;
- sw.globalAlpha=.4;r(gx+2,64,gw,3,'#000000');sw.globalAlpha=1;r(gx,62,gw,3,T.g);r(gx,62,gw,1,'rgba(255,255,255,.4)');r(gx,64,gw,1,'rgba(0,0,0,.35)');
- if(k>=10){r(gx-1,59,2,4,T.g);r(gx+gw-1,59,2,4,T.g);}else{r(gx-1,63,1,3,T.g);r(gx+gw,63,1,3,T.g);}
- if(k>=8)r(19,62,2,2,gl);
- r(18,65,4,12,'#5a3628');for(let y=67;y<77;y+=3)r(18,y,4,1,'#3b2430');
- r(21,65,1,12,'rgba(0,0,0,.3)');r(17,77,6,4,T.g);r(18,81,4,1,T.g);r(17,77,3,1,'rgba(255,255,255,.4)');r(22,78,1,3,'rgba(0,0,0,.3)');if(k>=13)r(19,78,2,2,gl);
+// Each form has its own silhouette: [blade length, half width, blade shape, guard type].
+const SP=[null,
+ [14,2,'st','bar'],[18,2.5,'st','bar'],[20,3.5,'leaf','bar'],[24,2.5,'st','cross'],[24,2.5,'saber','knuckle',5],
+ [24,5,'st','wide'],[32,1.2,'st','ring'],[24,4.5,'falch','bar'],[30,3,'full','cross'],[30,3,'wavy','cross',2.4],
+ [30,5,'full','wings'],[36,2.5,'saber','disc',6.5],[38,3,'st','vee'],[34,5,'saw','wings'],[34,5,'fork','cres'],
+ [40,6.5,'st','wide'],[38,5.5,'leaf','cres'],[38,5,'seg','wings'],[40,6,'full','wings2'],[42,6,'king','crown']];
+// Paints form k (0 = rusty) of element e on a 28x60 canvas. dim draws only the locked silhouette.
+function paintSword(c,k,e,fr,dim){
+ c.clearRect(0,0,28,60);
+ const E=ELS[e],T=look(k*2,e),sp=k?SP[k]:[16,2,'st','bar'],len=sp[0],hw=sp[1]+(e===1&&k?.5:0),shape=sp[2],G=sp[3],amp=sp[4]||0,cx=shape==='saber'?14-amp/2:14,gy=46,
+  r=(x,y,w,h,cl)=>{c.fillStyle=dim?'#26355f':cl;c.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),h);},
+  lit=mix(T.b,'#ffffff',.25),drk=mix(T.b,'#000000',.5),rim=mix(T.b,'#ffffff',.72),gl=T.glow||T.h,
+  gc=!k?'#6b5a4a':k<=5?'#9a7648':k<=10?'#d0a548':k<=15?E.g:'#ffd76a',tap=Math.max(3,Math.round(hw*1.6)),top=gy-len;
+ // row geometry: half width, sideways offset and edge spikes for every blade row
+ const rows=[];
+ for(let i=0;i<len;i++){const t=i/(len-1);let h=hw,o=0,ex=0;
+  if(shape==='leaf')h=hw*(.55+.65*Math.sin(Math.PI*Math.min(1,t*1.02)));
+  else if(shape==='saber')o=amp*t*t;
+  else if(shape==='falch')h=hw*(.5+.8*t);
+  else if(shape==='wavy')o=amp*Math.sin(t*Math.PI*5);
+  else if(shape==='saw')ex=i%4<2&&i<len-4?2:0;
+  else if(shape==='king')h=hw*(1-.3*t)+(i%10<2&&i>2?1:0);
+  if(shape==='seg'&&i%9>=7&&i<len-4)continue;
+  if(shape!=='leaf'&&i>=len-tap)h=Math.min(h,hw*(len-i)/tap);
+  if(shape==='falch'&&i>=len-tap)o=(i-(len-tap))*.7;
+  if(k&&e===0&&i%5===2&&i<len-3)ex=Math.max(ex,1+(((i/5|0)+fr)%2));
+  if(k&&e===1){h=Math.round(h*2)/2;if(i%6===4&&i<len-3)h-=1;}
+  if(k&&e===2&&i%7===3&&i<len-3)ex=Math.max(ex,2);
+  if(k&&e===3)o+=(Math.floor(i/4)%2?1:-1)*.9;
+  if(h>=.4)rows.push([gy-1-i,h,o,ex,t]);}
+ if(!dim){
+  if(T.glow){c.globalAlpha=.26+.08*(fr%4<2);c.fillStyle=T.glow;rows.forEach(q=>c.fillRect(Math.round(cx+q[2]-q[1]-q[3]-2),q[0]-1,Math.round((q[1]+q[3])*2+4),3));c.globalAlpha=1;}
+  c.fillStyle='#0b1022';rows.forEach(q=>c.fillRect(Math.round(cx+q[2]-q[1]-q[3]-1),q[0]-1,Math.round((q[1]+q[3])*2+2),3));}
+ rows.forEach(q=>{const y=q[0],h=q[1],mid=cx+q[2],ex=q[3],xl=mid-h,xr=mid+h;
+  r(xl,y,mid-xl,1,lit);r(mid,y,xr-mid,1,drk);r(xl,y,1,1,rim);
+  if(h>=2&&shape!=='full'&&shape!=='king')r(mid-1,y,1,1,T.h);
+  if(e===3&&k>=6)r(mid,y,1,1,'#fff7a8');
+  if(ex){const cl=e===2?T.h:e===0?gl:lit;r(xr,y,ex,1,cl);if(shape!=='saw')r(xl-ex,y,ex,1,cl);}
+  if(shape==='fork'&&q[4]>.6)c.clearRect(Math.round(mid)-2,y-(q[4]>.64?1:0),4,2);});
+ if(shape==='full'||shape==='king'){const fc=k>=12?gl:drk;if(hw>=4.5){r(cx-2,top+tap+1,1,len-tap-4,fc);r(cx+1,top+tap+1,1,len-tap-4,fc);}else r(cx-.5,top+tap+1,1,len-tap-4,fc);}
+ if(!k){r(cx-1,gy-6,2,2,'#6a4a35');r(cx,gy-12,2,2,'#6a4a35');c.clearRect(cx+1,gy-9,1,2);}
+ // guard, grip, pommel
+ const bw=Math.min(6,Math.round(hw)+2),bar=(half,th)=>{r(cx-half,gy,half*2,th,gc);r(cx-half,gy,half*2,1,mix(gc,'#ffffff',.45));};
+ if(G==='bar')bar(bw+1,2);
+ else if(G==='wide')bar(bw+4,3);
+ else if(G==='cross'){bar(bw+3,2);r(cx-bw-3,gy+2,1,2,gc);r(cx+bw+2,gy+2,1,2,gc);}
+ else if(G==='knuckle'){bar(bw+2,2);r(cx+bw+1,gy+2,1,9,gc);r(cx+1,gy+10,bw+1,1,gc);}
+ else if(G==='ring'){bar(4,2);[-7,4].forEach(a=>{const x=cx+a;r(x,gy-1,3,1,gc);r(x,gy+2,3,1,gc);r(x,gy,1,2,gc);r(x+2,gy,1,2,gc);});}
+ else if(G==='disc'){bar(5,2);r(cx-4,gy-1,8,1,gc);r(cx-4,gy+2,8,1,gc);}
+ else if(G==='vee'){bar(bw,2);for(let i=1;i<=4;i++){r(cx-bw-i*2,gy-i,2,2,gc);r(cx+bw+i*2-2,gy-i,2,2,gc);}}
+ else if(G==='cres'){bar(bw+3,2);r(cx-bw-4,gy-3,2,4,gc);r(cx+bw+2,gy-3,2,4,gc);r(cx-bw-3,gy-4,2,1,gc);r(cx+bw+1,gy-4,2,1,gc);}
+ else{bar(bw+2,2);for(let i=1;i<=3;i++){r(cx-bw-2-i*2,gy-i,3,2,gc);r(cx+bw-1+i*2,gy-i,3,2,gc);}
+  if(G==='wings2')for(let i=1;i<=2;i++){r(cx-bw-1-i*2,gy+1+i,3,1,gc);r(cx+bw-2+i*2,gy+1+i,3,1,gc);}
+  if(G==='crown'){r(cx-bw-8,gy-7,1,4,gc);r(cx+bw+7,gy-7,1,4,gc);r(cx-bw-5,gy-5,1,2,gc);r(cx+bw+4,gy-5,1,2,gc);}}
+ if(k>=16)r(cx-1,gy,2,2,gl);
+ const gp=k>10?mix(E.g,'#000000',.4):'#5a3628';
+ r(cx-1,gy+2,2,8,gp);for(let y=gy+3;y<gy+10;y+=2)r(cx-1,y,2,1,mix(gp,'#000000',.35));
+ r(cx-2,gy+10,4,3,gc);r(cx-2,gy+10,2,1,mix(gc,'#ffffff',.45));if(k>=13)r(cx-1,gy+11,2,1,gl);
+ if(dim||k<8)return;
+ // element effects around the blade
+ if(e===0)for(let i=0;i<3;i++){const q=(fr*2+i*5)%12;r(cx-3+i*3+(q%3)-1,top-1-q*.5,1,2,i%2?'#ffd76a':'#ff6b3d');}
+ if(e===1)for(let i=0;i<3;i++){const a=fr*.15+i*2.1;r(cx+11*Math.cos(a),gy-len/2+14*Math.sin(a),2,2,i%2?'#6fa04a':'#a08c62');}
+ if(e===2)for(let i=0;i<4;i++)if((fr+i*3)%8<5){const x=cx+[-9,8,-7,10][i],y=top+4+i*8;r(x,y,1,3,'#ffffff');r(x-1,y+1,3,1,'#ffffff');}
+ if(e===3&&fr%3!==0)for(let i=0;i<2;i++){let x=cx+(i?hw+3:-hw-4),y=top+((fr*5+i*13)%Math.max(8,len-8));for(let j=0;j<5;j++){r(x,y+j,1,1,'#fff7a8');x+=j%2?1:-1;}}
+ if(k>=20)for(let i=0;i<4;i++){const a=fr*.25+i*1.57;r(cx+12*Math.cos(a),gy-len/2+20*Math.sin(a),1,1,'#ffffff');}
 }
+function drawSword(){if(!S.hasSword){sw.clearRect(0,0,28,60);return;}paintSword(sw,formOf(S.level),S.el,f,false);}
+function buildDex(all){const g=$('#dexGrid');g.textContent='';ELS.forEach((E,e)=>{g.appendChild(el('div','dexh',E.n+' · '+S.dex[e]+' / 20'+(S.dex[e]?' · '+NAMES[e][S.dex[e]-1]+'까지':'')));const row=el('div','dexrow');
+ for(let k=1;k<=20;k++){const cv=el('canvas');cv.width=28;cv.height=60;cv.title=all||k<=S.dex[e]?NAMES[e][k-1]:'아직 만들지 못한 형상';paintSword(cv.getContext('2d'),k,e,0,!all&&k>S.dex[e]);row.appendChild(cv);}g.appendChild(row);});}
 
 /* ---------- reels ---------- */
 const TILE={flame:'#3d2a1c',hammer:'#2e3345',star:'#40351a',stone:'#232a3c',crack:'#2d1a3a',skull:'#3a171c'};
@@ -471,7 +518,7 @@ function render(){
  $('#sgG').style.width=(o.great3+o.great2)*100+'%';$('#sgU').style.width=o.up*100+'%';$('#sgK').style.width=o.keep*100+'%';$('#sgD').style.width=o.down*100+'%';$('#sgX').style.width=o.destroy*100+'%';
  $('#mG').style.width=(o.great3+o.great2)*100+'%';$('#mU').style.width=o.up*100+'%';$('#mK').style.width=o.keep*100+'%';$('#mD').style.width=o.down*100+'%';$('#mX').style.width=o.destroy*100+'%';
  const mt=$('#mTxt');mt.textContent='';[['대강화',o.great3+o.great2,'var(--gold)'],['강화',o.up,'var(--teal)'],['유지',o.keep,'var(--mute)'],['손상',o.down,'var(--crack)'],['파괴',o.destroy,'var(--danger)']].forEach(a=>{const sp=el('span',null,a[0]+' '+pc(a[1]));sp.style.color=a[2];mt.appendChild(sp);});
- $('#oddsNote').textContent='+'+L+' 검 기준 확률. 레벨이 오를수록 균열과 해골이 늘고, 해골은 +4부터 섞입니다.';
+ $('#oddsNote').textContent='+'+L+' 검 기준 확률. 레벨이 오를수록 균열과 해골이 늘고, 해골은 +8부터 섞입니다.';
  document.querySelectorAll('[data-buy]').forEach(b=>{const k=b.dataset.buy;
   if(k==='forge'){const mx=S.forge>=5,p=FORGE_COST[S.forge-1];b.textContent=mx?'완료':fmt(p);b.disabled=busy||mx||S.credits<p;}});
  const shopOpen=S.day%3===0,wait=3-S.day%3;
@@ -500,11 +547,23 @@ function render(){
  $('#stPow').textContent=defense()+' / '+(dy>=2&&dy<30?S.orc:'없음');
  $('#celCap').textContent='무기고 '+S.cellar.length+'/'+cap();
  const cl=$('#cellar');cl.textContent='';S.cellar.forEach((o,i)=>{const li=el('li',null,swName(o.l,o.e));if(!hs){const b=el('button','buy','꺼내기');b.id='out'+i;b.disabled=busy;b.onclick=()=>takeOut(i);li.appendChild(b);}cl.appendChild(li);});
- $('#celNote').textContent=(S.cellar.length?'걸어 둔 검이 밤마다 오크를 막습니다. 검 한 자루의 방어력은 형상 번호(레벨÷2) +1입니다.':'아직 걸어 둔 검이 없습니다. +1 이상 검을 보관하면 밤에 오크를 막는 방어력이 됩니다.')+' 지면 크레딧을 털리고 가장 좋은 검이 부러집니다. 서른 번째 밤에는 이 검들이 왕을 향하고, 형상 번호 합이 30 이상이면 복수에 성공합니다. 모루가 비면 꺼내서 다시 강화할 수 있습니다.';
- const dx=$('#dex');dx.textContent='';ELS.forEach((E,i)=>{const li=el('li'),sw2=el('i','sw');sw2.style.background=E.m;li.append(sw2,el('b',null,E.n),el('span',null,S.dex[i]?NAMES[i][S.dex[i]-1]+'까지 만듦':'아직 만든 검 없음'),el('span','pct',S.dex[i]+' / 20'));dx.appendChild(li);});
+ $('#celNote').textContent=(S.cellar.length?'걸어 둔 검이 밤마다 오크를 막습니다. 검 한 자루의 방어력은 형상 번호(레벨÷2) +1입니다.':'아직 걸어 둔 검이 없습니다. +1 이상 검을 보관하면 밤에 오크를 막는 방어력이 됩니다.')+' 지면 크레딧의 20%를 털리고 가장 좋은 검이 두 형상 내려갑니다. 서른 번째 밤에는 이 검들이 왕을 향합니다. 형상 번호 합이 30 이상이면 딸을 구해 탈출하고, 70 이상이면 복수에 성공합니다. 모루가 비면 꺼내서 다시 강화할 수 있습니다.';
+ coach();
  drawSword();save();
 }
 
+function coach(){const c=$('#coach');document.querySelectorAll('.hint').forEach(x=>x.classList.remove('hint'));
+ if(S.tutOff||S.day>3||S.ended){c.hidden=true;return;}
+ let t,tg;const d=S.day;
+ if(d===1){
+  if(!S.spins){t='① 강화하기를 눌러 녹슨 검에 룬을 새겨 보세요. 룬 아래 색 막대가 이번 강화의 확률입니다.';tg='#bEnh';}
+  else if(!S.cellar.length&&S.hasSword&&S.level<2){t='② 조금 더 강화해 보세요. 균열이 하나라도 뜨면 한 단계 내려가고, 해골이 둘 뜨면 부서집니다.';tg='#bEnh';}
+  else if(!S.cellar.length&&S.hasSword){t='③ 내일 밤부터 오크가 옵니다. 이 검을 방어용 보관으로 무기고에 걸어 두세요.';tg='#bHide';}
+  else if(S.cellar.length&&!S.sold&&S.hasSword){const lo=S.level<2;t=lo?'④ 다음 검도 강화해 보세요. 높일수록 비싸게 팔리지만 부서질 위험도 커집니다.':'④ 이번 검은 암시장에 팔아 보세요. 밤마다 내는 상납금이 여기서 나옵니다.';tg=lo?'#bEnh':'#bSell';}
+  else{t='⑤ 오늘 할 일이 끝나면 화덕 끄기를 누르세요. 밤에 징수관이 상납금을 걷어 갑니다.';tg='#bEnd';}
+ }else if(d===2){t='위쪽 방어/오크 칸을 보세요. 왼쪽이 내 방어력, 오른쪽이 오늘 밤 오크 전력입니다. 방어력이 더 높아야 안전합니다.';tg='#stPow';}
+ else{t='3일마다 상인이 옵니다. 그림 속 상인 꼬리표를 누르면 대장간을 증축할 수 있습니다. 선반의 편지도 눌러 보세요.';tg='#tagMer';}
+ $('#coachT').textContent=t;c.hidden=false;const e=$(tg);if(e)(tg==='#stPow'?e.parentElement:e).classList.add('hint');}
 function enhance(){
  if(busy||!S.hasSword||S.level>=MAXL)return;const c=cost(S.level);if(S.credits<c)return;
  S.credits-=c;S.spins++;
@@ -563,8 +622,8 @@ function endDay(){if(busy)return;clearTimeout(sellArm);sellArm=0;
  if(d>=2){raid=battle(def,orcs);
   if(raid.win){const loot=20+orcs*12;S.credits+=loot;S.repel++;ev.push('오크 무리(전력 '+orcs+')를 막아냈습니다. 전리품 '+fmt(loot)+' 크레딧.');
    if(S.cellar.length&&Math.random()<.35){const i=Math.random()*S.cellar.length|0;const o=S.cellar[i];if(o.l>2){ev.push('싸우다가 '+swName(o.l,o.e)+'의 이가 빠져 한 형상 내려갔습니다.');o.l-=2;}}}
-  else{const lost=Math.round(S.credits*.3);S.credits-=lost;ev.push('오크 무리(전력 '+orcs+')에게 방어선이 뚫렸습니다. '+fmt(lost)+' 크레딧을 털렸습니다.');
-   if(S.cellar.length){let bi=0;S.cellar.forEach((o,i)=>{if(o.l>S.cellar[bi].l)bi=i;});const bo=S.cellar.splice(bi,1)[0];ev.push('오크가 '+swName(bo.l,bo.e)+'을 부러뜨렸습니다.');}}}
+  else{const lost=Math.round(S.credits*.2);S.credits-=lost;ev.push('오크 무리(전력 '+orcs+')에게 방어선이 뚫렸습니다. '+fmt(lost)+' 크레딧을 털렸습니다.');
+   if(S.cellar.length){let bi=0;S.cellar.forEach((o,i)=>{if(o.l>S.cellar[bi].l)bi=i;});const bo=S.cellar[bi],was=swName(bo.l,bo.e);bo.l-=4;if(bo.l<2){S.cellar.splice(bi,1);ev.push('오크가 '+was+'을 부러뜨렸습니다.');}else ev.push('오크가 '+was+'의 날을 꺾었습니다. 두 형상 내려갔습니다.');}}}
  if(NIGHT[d])ev.push(NIGHT[d]);
  const left=S.credits,kid=S.kid;
  S.day++;S.earn=0;S.stock=supply();if(!S.hasSword)takeNext();S.orc=S.day<30?orcOf(S.day):0;
@@ -591,9 +650,9 @@ function showNight(d,earn,ev,raid,def,orcs,left,kid){clearInterval(raidT);openOv
   hMe.style.width=e.ha*100+'%';hOp.style.width=e.hb*100+'%';logP.textContent=(e.me?'방어용 검이 오크를 벱니다':'오크가 문을 내리칩니다')+' · 피해 '+e.d;tone(e.me?520:150,.07,e.me?'square':'sawtooth',.05);};
  tick();raidT=setInterval(tick,RM?30:80);});}
 function uprising(){const p=power(),kid=S.kid>0;let t,m;
- if(p>=30&&kid){t='복수의 밤';m='밤마다 오크를 막아내던 검이 이웃들의 손에 쥐어졌다. 근위대가 무너지고 탑의 문이 열렸다. 딸은 아버지의 망치를 알아보았다. 왕의 시대는 그 밤에 끝났다.';}
- else if(p>=15&&kid){t='탈출';m='검이 모자랐다. 왕좌까지는 닿지 못했지만 탑의 문은 부술 수 있었다. 딸의 손을 잡고 도시를 떠났다. 모루는 두고 왔다. 언젠가 돌아올 것이다.';}
- else if(p>=30){t='늦은 복수';m='왕은 쓰러졌다. 하지만 탑은 비어 있었다. 상납을 거른 밤들이 떠올랐다.';}
+ if(p>=70&&kid){t='복수의 밤';m='밤마다 오크를 막아내던 검이 이웃들의 손에 쥐어졌다. 근위대가 무너지고 탑의 문이 열렸다. 딸은 아버지의 망치를 알아보았다. 왕의 시대는 그 밤에 끝났다.';}
+ else if(p>=30&&kid){t='탈출';m='검이 모자랐다. 왕좌까지는 닿지 못했지만 탑의 문은 부술 수 있었다. 딸의 손을 잡고 도시를 떠났다. 모루는 두고 왔다. 언젠가 돌아올 것이다.';}
+ else if(p>=70){t='늦은 복수';m='왕은 쓰러졌다. 하지만 탑은 비어 있었다. 상납을 거른 밤들이 떠올랐다.';}
  else{t='꺼진 화덕';m='봉기는 성문 앞에서 멈췄다. 검이 모자랐다. 대장간의 불은 그 밤 이후 다시 켜지지 않았다.';}
  S.ended={t,m,p};save();showEnd();}
 function showEnd(){const e=S.ended;openOv(box=>{box.append(el('h2',null,'서른 번째 밤 · '+e.t),el('p',null,e.m),el('p','note','검의 전력 '+e.p+' · 최고 강화 +'+S.best+' · 오크 격퇴 '+S.repel+'회'));
@@ -641,8 +700,9 @@ document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buy(b.dataset.b
 $('#mute').onclick=e=>{muted=!muted;e.currentTarget.setAttribute('aria-pressed',muted);e.currentTarget.textContent=muted?'소리 꺼짐':'소리 켜짐';};
 $('#reset').onclick=()=>{if(busy)return;if(!resetArm){resetArm=setTimeout(()=>{resetArm=0;render();},3000);render();return;}
  clearTimeout(resetArm);resetArm=0;fresh();};
-document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{$('#'+b.dataset.open).hidden=false;if(b.dataset.open==='shLetter'&&S.unread){S.unread=false;render();}});
+document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{$('#'+b.dataset.open).hidden=false;if(b.dataset.open==='shLetter'&&S.unread){S.unread=false;render();}if(b.dataset.open==='shLog')buildDex(false);});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{b.closest('.ov').hidden=true;});
+$('#coachX').onclick=()=>{S.tutOff=true;render();};$('#dexAll').onclick=()=>buildDex(true);
 $('#bHide').onclick=hide;$('#bEnd').onclick=endDay;$('#bIntro').onclick=intro;
 
 /* ---------- loop ---------- */
